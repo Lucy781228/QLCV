@@ -1,5 +1,5 @@
 <template>
-    <NcModal v-if="modal" :canClose="false">
+    <NcModal v-if="modal" :canClose="full_name" @close="closeModal">
         <div v-if="full_name" class="modal__content">
             <div class="grid-item full-width">
                 <h2 class="modal-title">{{ projectName }}</h2>
@@ -265,11 +265,13 @@ export default {
 
         async createProject() {
             try {
+                const currentDate = new Date();
                 const response = await axios.post('/apps/qlcv/create_project', {
                     start_date: this.mysqlDateFormatter(this.startDate),
                     end_date: this.mysqlDateFormatter(this.endDate),
                     project_name: this.projectName,
                     user_id: this.user.uid,
+                    status: this.startDate <= currentDate ? 1 : 0
                 });
                 showSuccess(t('qlcv', 'Thêm thành công'));
                 this.closeModal()
@@ -285,7 +287,8 @@ export default {
                     end_date: this.mysqlDateFormatter(this.formatEndDate),
                     project_name: this.projectName,
                     user_id: this.user.uid,
-                    project_id: this.projectId
+                    project_id: this.projectId,
+                    status: null
                 });
                 showSuccess(t('qlcv', 'Cập nhật thành công'));
                 this.closeModal()

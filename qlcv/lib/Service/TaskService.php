@@ -13,7 +13,7 @@ class TaskService {
         $this->db = $db;
     }
 
-    public function create($work_id, $content, $is_done) {
+    public function createTask($work_id, $content, $is_done) {
         try {
             $query = $this->db->getQueryBuilder();
             $query->insert('qlcv_task')
@@ -30,22 +30,26 @@ class TaskService {
         }
     }
 
-    public function update($task_id, $content, $is_done) {
+    public function updateTask($task_id, $content, $is_done) {
         try {
-            $query = $this->db->getQueryBuilder();
-            $query->update('qlcv_task')
-                  ->set('content', $query->createNamedParameter($content))
-                  ->set('is_done', $query->createNamedParameter($is_done))
-                  ->where($query->expr()->eq('task_id', $query->createNamedParameter($task_id)))
-                  ->execute();
-
+            $sql = 'UPDATE `oc_qlcv_task` SET `content` = COALESCE(?, `content`), 
+                                           `is_done` = COALESCE(?, `is_done`)
+                                           WHERE `task_id` = ?';
+            $query = $this->db->prepare($sql);
+            
+            $query->execute([
+                $content,
+                $is_done,
+                $task_id
+            ]);
+    
             return ["status" => "success"];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
         }
     }
 
-    public function delete($task_id) {
+    public function deleteTask($task_id) {
         try {
             $query = $this->db->getQueryBuilder();
             $query->delete('qlcv_task')
@@ -58,7 +62,7 @@ class TaskService {
         }
     }
 
-    public function getAllTasks($work_id) {
+    public function getTasks($work_id) {
         try {
             $query = $this->db->getQueryBuilder();
             $query->select('*')
@@ -66,9 +70,9 @@ class TaskService {
                   ->where($query->expr()->eq('work_id', $query->createNamedParameter($work_id)));
 
             $result = $query->execute();
-            $tasks = $result->fetchAll();
+            $data = $result->fetchAll();
 
-            return $tasks;
+            return $data;
         } catch (Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
         }

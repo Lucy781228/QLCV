@@ -1,5 +1,22 @@
 <template>
-    <div class="work-list">
+    <div v-if="showEmpty">
+        <NcLoadingIcon />
+    </div>
+    <div v-else-if="!works.length && isChildRoute" >
+        <NcEmptyContent>
+            <template #title>
+                <h1 class="empty-content__title">
+                    Không có công việc
+                </h1>
+            </template>
+            <template #action>
+                <NcButton ariaLabel="A" to="/newwork" type="primary">
+                    Thêm công việc
+                </NcButton>
+            </template>
+        </NcEmptyContent>
+    </div>
+    <div class="work-list" v-else-if="isChildRoute">
         <div class="header">
             <div class="first-header">
                 <h2>{{ receivedTitle }}</h2>
@@ -8,12 +25,14 @@
                         :show-trailing-button="searchQuery !== ''" @trailing-button-click="clearText">
                         <Magnify :size="16" />
                     </NcTextField>
-                    <NcButton type="tertiary" :to="{ name: 'project-gantt', params: { sharedProjectID: receivedProjectID } }" aria-label="Example text">
+                    <NcButton type="tertiary"
+                        :to="{ name: 'project-gantt', params: { sharedProjectID: receivedProjectID } }"
+                        aria-label="Example text" v-if="isProjectOwner">
                         <template #icon>
                             <ChartGantt :size="20" />
                         </template>
                     </NcButton>
-                    <NcButton type="tertiary" to="/newwork" aria-label="Example text">
+                    <NcButton type="tertiary" to="/newwork" aria-label="Example text" v-if="isProjectOwner">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -28,26 +47,32 @@
         </div>
         <div class="grid-row">
             <div class="grid-column" v-for="status in [0, 1, 2, 3]" :key="status">
-                <router-link :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }" class="work-item" v-for="work in filteredWorksByStatus(status)" :key="work.work_id">
-                    <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to" :work-id="work.work_id" @delete="showModal"
-                        :end-date="work.end_date" />
+                <router-link
+                    :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }"
+                    class="work-item" v-for="work in filteredWorksByStatus(status)" :key="work.work_id">
+                    <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to" :status="work.status"
+                        :work-id="work.work_id" @delete="showModal" :end-date="work.end_date" :is-project-owner="isProjectOwner" @update="getWorks"/>
                 </router-link>
             </div>
         </div>
-    <router-view @back-to-worklist="getWorks"/>
-    <NcModal :show="isDelete" :canClose="false" size="small">
-			<div class="modal__content">
-				<h3>Bạn chắc chắn không?</h3>
-				<div class="modal__actions">
-					<NcButton @click="stopModal" type="primary" aria-label="Example text">
-						Hủy
-					</NcButton>
-					<NcButton @click="deleteWork" type="secondary" aria-label="Example text">
-						Xóa
-					</NcButton>
-				</div>
-			</div>
-		</NcModal>
+        <router-view @back-to-worklist="getWorks" />
+        
+        <NcModal :show="isDelete" :canClose="false" size="small">
+            <div class="modal__content">
+                <h3>Bạn chắc chắn không?</h3>
+                <div class="modal__actions">
+                    <NcButton @click="stopModal" type="primary" aria-label="Example text">
+                        Hủy
+                    </NcButton>
+                    <NcButton @click="deleteWork" type="secondary" aria-label="Example text">
+                        Xóa
+                    </NcButton>
+                </div>
+            </div>
+        </NcModal>
+    </div>
+    <div class="chart" v-else>
+        <router-view/>
     </div>
 </template>
 
@@ -55,7 +80,7 @@
 import axios from "@nextcloud/axios";
 import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
-import { NcButton, NcTextField, NcModal } from "@nextcloud/vue";
+import { NcButton, NcTextField, NcModal, NcEmptyContent } from "@nextcloud/vue";
 import { getCurrentUser } from '@nextcloud/auth'
 import Work from "./Work.vue";
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -76,7 +101,8 @@ export default {
         WorkMenu,
         ChartGantt,
         Test,
-        NcModal
+        NcModal,
+        NcEmptyContent
     },
     data() {
         return {
@@ -89,7 +115,8 @@ export default {
             work: null,
             showGantt: false,
             isDelete: false,
-            workId: 0
+            workId: 0,
+            showEmpty: true
         };
     },
 
@@ -106,11 +133,18 @@ export default {
             return this.$store.state.sharedProjectOwner;
         },
         isChildRoute() {
-            return this.$route.name !== 'project';
-        }
+            return this.$route.name !== 'project-gantt';
+        },
+        isProjectOwner() {
+            return this.user.uid==this.receivedUserID;
+        },
+        completedWorksCount() {
+      return this.works.filter(work => work.status === 3).length
+    },
     },
 
     mounted() {
+        
     },
 
     watch: {
@@ -132,11 +166,9 @@ export default {
     },
 
     methods: {
-
         showGanttChart() {
             this.showGantt = true
-            console.log(this.showGantt)
-            this.$router.push({ path: `/project/${this.receivedProjectID}/gantt` }); 
+            this.$router.push({ path: `/project/${this.receivedProjectID}/gantt` });
         },
 
         filteredWorksByStatus(status) {
@@ -158,7 +190,9 @@ export default {
                 });
                 this.works = response.data.works;
                 this.filteredWorks = JSON.parse(JSON.stringify(this.works));
+                this.showEmpty = false
 
+                if(this.works.length && this.completedWorksCount == this.works.length) this.updateProject()
             } catch (e) {
                 console.error(e)
             }
@@ -175,15 +209,15 @@ export default {
         },
 
         async deleteWork() {
-			try {
-				const response = await axios.delete(generateUrl('apps/qlcv/delete_work/' + this.workId))
-				showSuccess(t('qlcv', 'Xóa thành công'));
-				this.stopModal()
-				this.getWorks()
-			} catch (e) {
-				console.error(e)
-			}
-		},
+            try {
+                const response = await axios.delete(generateUrl('apps/qlcv/delete_work/' + this.workId))
+                showSuccess(t('qlcv', 'Xóa thành công'));
+                this.stopModal()
+                this.getWorks()
+            } catch (e) {
+                console.error(e)
+            }
+        },
 
         showModal(workId) {
             this.isDelete = true
@@ -192,7 +226,23 @@ export default {
 
         stopModal() {
             this.isDelete = false
-        }
+        },
+
+        async updateProject() {
+            try {
+                const response = await axios.put('/apps/qlcv/update_project', {
+                    start_date: null,
+                    end_date: null,
+                    project_name: null,
+                    user_id: null,
+                    project_id: this.receivedProjectID,
+                    status: 2
+                });
+                this.$emit('close');
+            } catch (e) {
+                console.error(e)
+            }
+        },
     }
 }
 </script>
@@ -270,14 +320,19 @@ export default {
 }
 
 .modal__content {
-	margin: 20px;
-	text-align: center;
+    margin: 20px;
+    text-align: center;
 }
 
 .modal__actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 20px;
-	margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.chart {
+    height: 100%;
+    width: 100%
 }
 </style>

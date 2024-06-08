@@ -108,7 +108,7 @@ export default {
     async createComment() {
       try {
         const response = await axios.post('/apps/qlcv/create_comment', {
-          message: this.replyCommentId ? this.reply : this.comment,
+          message: this.replyCommentId ? this.reply : this.message,
           reply_comment_id: this.replyCommentId,
           user_id: this.user.uid,
           work_id: this.workId

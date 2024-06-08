@@ -10,33 +10,22 @@ use OCA\QLCV\Service\ProjectService;
 use OCA\QLCV\Notification\NotificationHelper;
 use OCP\Notification\IManager as NotificationManager;
 
-
-use OCP\BackgroundJob\IJobList;
-class ProjectController extends Controller {
+class ProjectController extends Controller
+{
     private $projectService;
     private $notificationHelper;
-
-
-
-    private IJobList $jobList;
 
     public function __construct(
         $AppName,
         IRequest $request,
         ProjectService $projectService,
-        NotificationManager $notificationManager,
-
-
-        IJobList $jobList
+        NotificationManager $notificationManager
     ) {
         parent::__construct($AppName, $request);
         $this->projectService = $projectService;
         $this->notificationHelper = new NotificationHelper(
             $notificationManager
         );
-
-
-        $this->jobList = $jobList;
     }
 
     /**
@@ -48,9 +37,17 @@ class ProjectController extends Controller {
         $project_name,
         $user_id,
         $start_date,
-        $end_date
+        $end_date,
+        $status
     ) {
-        $result = $this->projectService->createProject($project_id, $project_name, $user_id, $start_date, $end_date);
+        $result = $this->projectService->createProject(
+            $project_id,
+            $project_name,
+            $user_id,
+            $start_date,
+            $end_date,
+            $status
+        );
         return new JSONResponse($result);
     }
 
@@ -58,12 +55,20 @@ class ProjectController extends Controller {
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getProjects($user_id) {
-        $this->jobList->add(TestJob::class);
-
-
+    public function getProjects($user_id)
+    {
         $data = $this->projectService->getProjects($user_id);
-        return new JSONResponse(['projects' => $data]);
+        return new JSONResponse(["projects" => $data]);
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getAProject($project_id)
+    {
+        $data = $this->projectService->getAProject($project_id);
+        return new JSONResponse(["project" => $data]);
     }
 
     /**
@@ -78,7 +83,14 @@ class ProjectController extends Controller {
         $end_date,
         $status
     ) {
-        $result = $this->projectService->updateProject($project_id, $project_name, $user_id, $start_date, $end_date, $status);
+        $result = $this->projectService->updateProject(
+            $project_id,
+            $project_name,
+            $user_id,
+            $start_date,
+            $end_date,
+            $status
+        );
         // $this->notificationHelper->notifyRenameProject('user1', 'TEST', $project_name);
         return new JSONResponse($result);
     }
@@ -87,7 +99,8 @@ class ProjectController extends Controller {
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function deleteProject($project_id) {
+    public function deleteProject($project_id)
+    {
         $result = $this->projectService->deleteProject($project_id);
         return new JSONResponse($result);
     }

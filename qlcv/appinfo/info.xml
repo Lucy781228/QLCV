@@ -20,7 +20,7 @@
     </dependencies>
     <background-jobs>
         <job>OCA\QLCV\Cron\CheckWorkDeadline</job>
-        <job>OCA\QLCV\Cron\TestJob</job>
+        <job>OCA\QLCV\Cron\SetDoingProject</job>
     </background-jobs>
     <navigations>
         <navigation>

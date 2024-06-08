@@ -15,12 +15,15 @@ declare(strict_types=1);
  */
 return [
     'routes' => [
+
+                // Page
+        ['name' => 'test#predictCompletionTime', 'url' => '/predictCompletionTime', 'verb' => 'GET'],
+
         // Page
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
         // Data
-        ['name' => 'Data#countWorksPerProject', 'url' => '/data/count_works/{user_id}', 'verb' => 'GET'],
-        ['name' => 'Data#doneWorksPerProject', 'url' => '/data/done_works/{user_id}', 'verb' => 'GET'],
+        ['name' => 'Data#countWorksPerProject', 'url' => '/data/count_works/{userId}', 'verb' => 'GET'],
 
         //User
         ['name' => 'User#getUsers', 'url' => '/users', 'verb' => 'GET'],
@@ -36,6 +39,7 @@ return [
         // Project
         ['name' => 'Project#createProject', 'url' => '/create_project', 'verb' => 'POST'],
         ['name' => 'Project#getProjects', 'url' => '/projects/{user_id}', 'verb' => 'GET'],
+        ['name' => 'Project#getAProject', 'url' => '/project/{project_id}', 'verb' => 'GET'],
         ['name' => 'Project#updateProject', 'url' => '/update_project', 'verb' => 'PUT'],
         ['name' => 'Project#deleteProject', 'url' => '/delete_project/{project_id}', 'verb' => 'DELETE'],
 
@@ -51,8 +55,10 @@ return [
         ['name' => 'Comment#getComments', 'url' => '/comments/{work_id}', 'verb' => 'GET'],
 
         // Task
+        ['name' => 'Task#getTasks', 'url' => '/tasks/{work_id}', 'verb' => 'GET'],
+
+
         ['name' => 'Task#createTask', 'url' => '/create_task', 'verb' => 'POST'],
-        ['name' => 'Task#getTask', 'url' => '/tasks', 'verb' => 'GET'],
         ['name' => 'Task#getTaskById', 'url' => '/tasks_by_id/{id}', 'verb' => 'GET'],
         ['name' => 'Task#updateTask', 'url' => '/update_task', 'verb' => 'PUT'],
         ['name' => 'Task#deleteTask', 'url' => '/delete_task/{id}', 'verb' => 'DELETE'],

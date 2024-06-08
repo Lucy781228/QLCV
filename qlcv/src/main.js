@@ -12,7 +12,7 @@ import WorkList from './components/WorkList.vue'
 import NewWork from './components/NewWork.vue'
 import VueRouter from 'vue-router'
 import store from './store'
-import ProjectChart from './components/data/ProjectChart.vue'
+import DataMenu from './components/data/DataMenu.vue'
 import Test from './components/data/Test.vue'
 import WorkMenu from './components/WorkMenu.vue'
 
@@ -63,7 +63,7 @@ const router = new VueRouter({
 		},
 		{
 			path: '/analyst',
-			component: ProjectChart,
+			component: DataMenu,
 		},
 	]
 })

@@ -14,7 +14,6 @@ class CheckWorkDeadline extends TimedJob {
     private $notificationHelper;
 
     private NotificationManager $notificationManager;
-    protected $logger;
 
     public function __construct(ITimeFactory $time, WorkService $workService, NotificationManager $notificationManager, ILogger $logger) {
         parent::__construct($time);
@@ -24,24 +23,35 @@ class CheckWorkDeadline extends TimedJob {
         );
         $this->logger = $logger;
 
-        $this->setInterval(360);
+        $this->setInterval(60 * 10);
     }
 
     protected function run($arguments) {
-        $this->logger->debug('CheckWorkDeadline job is running.', ['app' => 'QLCV']);
-        $works = $this->workService->getAllWorks();
 
-        foreach ($works as $work) {
-            $daysToDeadline = $this->workService->calculateDaysToDeadline($work['work_id']);
+        $currentTime = new \DateTime();
+        $startOfDay = new \DateTime('today 00:00:00');
+        $endOfFirst15Minutes = (clone $startOfDay)->modify('+15 minutes');
 
-            if ($daysToDeadline === 0) {
-                $this->notificationHelper->notifyDueWork($work['assigned_to'], $work['project_name'], $work['work_name']);
-            } elseif ($daysToDeadline === 7) {
-                $this->notificationHelper->notify7dayWork($work['assigned_to'], $work['project_name'], $work['work_name']);
-            } elseif ($daysToDeadline === 30) {
-                $this->notificationHelper->notify30dayWork($work['assigned_to'], $work['project_name'], $work['work_name']);
+        if ($currentTime >= $startOfDay && $currentTime <= $endOfFirst15Minutes) {
+            try {
+        $this->logger->debug('CheckWorkDeadline');
+                $works = $this->workService->getAllWorks();
+
+                foreach ($works as $work) {
+                    $daysToDeadline = $this->workService->calculateDaysToDeadline($work['work_id']);
+        
+                    if ($daysToDeadline === 0) {
+                        $this->notificationHelper->notifyDueWork($work['assigned_to'], $work['project_name'], $work['work_name']);
+                    } elseif ($daysToDeadline === 7) {
+                        $this->notificationHelper->notify7dayWork($work['assigned_to'], $work['project_name'], $work['work_name']);
+                    } elseif ($daysToDeadline === 30) {
+                        $this->notificationHelper->notify30dayWork($work['assigned_to'], $work['project_name'], $work['work_name']);
+                    }
+                }
+            } catch (\Exception $e) {
+        $this->logger->debug('CheckWorkDeadline error');
             }
         }
-        $this->logger->debug('CheckWorkDeadline job has finished.', ['app' => 'QLCV']);
+
     }
 }

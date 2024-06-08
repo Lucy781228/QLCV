@@ -6,13 +6,13 @@
                     <template #icon>
                         <Home :size="20" />
                     </template>
-                    <Details v-if="work" :work-id="workId" />
+                    <Details v-if="work" :work-id="workId" :is-project-owner="isProjectOwner" :disabled="work.status"/>
                 </NcAppSidebarTab>
                 <NcAppSidebarTab name="Tác vụ" id="tasks" order="2">
                     <template #icon>
                         <CardsVariant :size="20" />
                     </template>
-                    <Task v-if="work" :work-id="workId" />
+                    <Task v-if="work" :work-id="workId" :is-project-owner="isProjectOwner" :disabled="work.status" :is-todo-work="work.status"/>
                 </NcAppSidebarTab>
                 <NcAppSidebarTab name="Đính kèm" id="attachment" order="3">
                     <template #icon>
@@ -25,7 +25,7 @@
                     <template #icon>
                         <Comment :size="20" />
                     </template>
-                    <WorkComment  v-if="work" :work-id="workId"/>
+                    <WorkComment v-if="work" :work-id="workId" />
                 </NcAppSidebarTab>
             </NcAppSidebar>
         </div>
@@ -85,13 +85,20 @@ export default {
     computed: {
         receivedProjectID() {
             return this.$store.state.sharedProjectID;
+        },
+        receivedUserID() {
+            return this.$store.state.sharedProjectOwner;
+        },
+        isProjectOwner() {
+            return this.user.uid == this.receivedUserID;
         }
     },
 
     methods: {
         closeMenu() {
             this.$emit('back-to-worklist');
-      this.$router.push({ name: 'project', params: { receivedProjectID: this.$route.params.sharedProjectID } });
+            console.log('from workmenu')
+            this.$router.push({ name: 'project', params: { receivedProjectID: this.$route.params.sharedProjectID } });
         },
 
         async getWork() {

@@ -29,35 +29,35 @@ class Application extends App implements IBootstrap{
         //     );
         // });
 
-        $context->registerService(WorkService::class, function($c) {
-            return new WorkService(
-                $c->query(IDBConnection::class)
-            );
-        });
+        // $context->registerService(WorkService::class, function($c) {
+        //     return new WorkService(
+        //         $c->query(IDBConnection::class)
+        //     );
+        // });
 
-        $context->registerService(TaskService::class, function($c) {
-            return new TaskService(
-                $c->query(IDBConnection::class)
-            );
-        });
+        // $context->registerService(TaskService::class, function($c) {
+        //     return new TaskService(
+        //         $c->query(IDBConnection::class)
+        //     );
+        // });
 
-        $context->registerService(FileService::class, function($c) {
-            return new FileService(
-                $c->query(IDBConnection::class)
-            );
-        });
+        // $context->registerService(FileService::class, function($c) {
+        //     return new FileService(
+        //         $c->query(IDBConnection::class)
+        //     );
+        // });
 
-        $context->registerService(DataService::class, function($c) {
-            return new DataService(
-                $c->query(IDBConnection::class)
-            );
-        });
+        // $context->registerService(DataService::class, function($c) {
+        //     return new DataService(
+        //         $c->query(IDBConnection::class)
+        //     );
+        // });
 
-        $context->registerService(ProjectAnalystService::class, function($c) {
-            return new ProjectAnalystService(
-                $c->query(IDBConnection::class)
-            );
-        });
+        // $context->registerService(ProjectAnalystService::class, function($c) {
+        //     return new ProjectAnalystService(
+        //         $c->query(IDBConnection::class)
+        //     );
+        // });
 
 
         // $context->registerService(FileController::class, function($c) {

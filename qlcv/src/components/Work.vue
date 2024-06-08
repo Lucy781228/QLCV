@@ -13,12 +13,26 @@
         <div class="work-footer">
             <div class="footer-left" v-if="isDue">Quá hạn</div>
             <div class="footer-right">
-                <NcAvatar v-if="assignedTo" :display-name="assignedTo" />
-                <NcButton type="tertiary" @click.stop.prevent="deleteWork">
-                    <template #icon>
-                        <Delete :size="16" />
-                    </template>
-                </NcButton>
+                <NcAvatar :display-name="assignedTo" />
+                <div @click.stop.prevent>
+                    <NcActions v-if="isProjectOwner">
+                        <NcActionButton type="tertiary" @click.stop.prevent="deleteWork" :closeAfterClick="true">
+                            <template #icon>
+                                <Delete :size="16" />Xóa
+                            </template>
+                        </NcActionButton>
+                        <NcActionButton type="tertiary" @click.stop.prevent="updateStatus" v-if="status==2" :closeAfterClick="true">
+                            <template #icon>
+                                <Check :size="16" />Phê duyệt
+                            </template>
+                        </NcActionButton>
+                        <NcActionButton type="tertiary" @click.stop.prevent="updateWork" v-if="status==2" :closeAfterClick="true">
+                            <template #icon>
+                                <Close :size="16" />Từ chối
+                            </template>
+                        </NcActionButton>
+                    </NcActions>
+                </div>
             </div>
         </div>
     </div>
@@ -26,16 +40,32 @@
 
 <script>
 import Delete from 'vue-material-design-icons/Delete.vue'
+import Check from 'vue-material-design-icons/Check.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 import CalendarBlankOutline from 'vue-material-design-icons/CalendarBlankOutline.vue'
-import { NcActions, NcButton, NcAvatar } from "@nextcloud/vue";
+import { NcActions, NcActionButton, NcAvatar } from "@nextcloud/vue";
+import { getCurrentUser } from '@nextcloud/auth'
+import axios from "@nextcloud/axios";
+import { generateUrl } from '@nextcloud/router'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 
 export default {
     name: 'Work',
     components: {
         CalendarBlankOutline,
-        NcButton,
+        NcActionButton,
         Delete,
-        NcAvatar
+        NcAvatar,
+        NcActions,
+        Check,
+        Close
+    },
+
+    data() {
+        return {
+            user: getCurrentUser(),
+            newStatus: 1,
+        };
     },
 
     props: {
@@ -62,25 +92,33 @@ export default {
         isDue: {
             type: Boolean,
             default: false
+        },
+        isProjectOwner: {
+            type: Boolean,
+            required: true
+        },
+        status: {
+            type: Number,
+            required: true
         }
     },
 
     methods: {
         textStyle(text) {
             const styles = {
-                'Gấp': {
+                'Cao': {
                     backgroundColor: '#FF7A66',
                     color: 'black',
                     borderRadius: '10px',
                     padding: '2px 5px',
                 },
-                'Bình thường': {
+                'Thấp': {
                     backgroundColor: '#30CC7B',
                     color: 'white',
                     borderRadius: '10px',
                     padding: '2px 5px',
                 },
-                'Quan trọng': { 
+                'Trung bình': { 
                     backgroundColor: '#F1DB50',
                     color: 'black',
                     borderRadius: '10px',
@@ -100,7 +138,31 @@ export default {
         deleteWork(event) {
             event.stopPropagation();
             this.$emit('delete', this.workId)
-        }
+        },
+
+        updateStatus() {
+            this.newStatus = 3
+            this.updateWork()
+        },
+
+        async updateWork() {
+            try {
+                const response = await axios.put('/apps/qlcv/update_work', {
+                    work_name: null,
+                    description: null,
+                    start_date: null,
+                    end_date: null,
+                    label: null,
+                    assigned_to: null,
+                    status: this.newStatus,
+                    work_id: this.workId
+                });
+            this.$emit('update')
+                showSuccess("Cập nhật thành công.")
+            } catch (error) {
+                console.error("Lỗi khi tạo công việc: ", error);
+            }
+        },
     },
 };
 </script>

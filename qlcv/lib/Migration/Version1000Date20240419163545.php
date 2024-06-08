@@ -120,10 +120,10 @@ class Version1000Date20240419163545 extends SimpleMigrationStep
             $table->addColumn("end_date", "date", [
                 "notnull" => true,
             ]);
-            $table->addColumn("returned_dates", "text", [
+            $table->addColumn("actual_end_date", "date", [
                 "notnull" => false,
             ]);
-            $table->addColumn("durations", "text", [
+            $table->addColumn("is_returned", "boolean", [
                 "notnull" => false,
             ]);
             $table->addColumn("label", "string", [

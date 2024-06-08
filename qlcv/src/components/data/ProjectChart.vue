@@ -1,45 +1,46 @@
 <template>
     <div class="main-container" v-if="loaded">
-        <div class="icon-container">
-            <div class="icons">
-                <NcButton aria-label="Example text" type="tertiary">
-                    <template #icon>
-                        <FilterVariant :size="20" />
-                    </template>
-                </NcButton>
-                <NcButton aria-label="Example text" type="tertiary" @click="downloadBarChart">
-                    <template #icon>
-                        <ArrowCollapseDown :size="20" />
-                    </template>
-                </NcButton>
+        <div class=line-item1>
+            <div class="icon-container">
+                <div class="text-container">
+                        <span>Tiến độ từng dự án</span>
+                    </div>
+                <div class="icons">
+                    <NcButton aria-label="Example text" type="tertiary">
+                        <template #icon>
+                            <ArrowCollapseDown :size="14" />
+                        </template>
+                    </NcButton>
+                </div>
+            </div>
+            <div class="chart-container">
+                <BarChart :chart-data="projectStatus.chartData" :options="projectStatus.chartOptions" ref="projectStatus" :width="200"
+                        :height="570"/>
             </div>
         </div>
-        <div class="chart-container">
-            <BarChart :chart-data="bar.chartData" :options="bar.chartOptions" ref="barChart" :width="300"
-                :height="320" />
-        </div>
-        <div class="icon-container">
-            <div class="icons">
-                <NcButton aria-label="Example text" type="tertiary">
-                    <template #icon>
-                        <FilterVariant :size="20" />
-                    </template>
-                </NcButton>
-                <NcButton aria-label="Example text" type="tertiary" @click="downloadBarChart2">
-                    <template #icon>
-                        <ArrowCollapseDown :size="20" />
-                    </template>
-                </NcButton>
+        <div class=line-item2>
+            <div class="icon-container">
+                <div class="text-container">
+                        <span>Phân loại công việc theo độ ưu tiên</span>
+                    </div>
+                <div class="icons">
+                    <NcButton aria-label="Example text" type="tertiary">
+                        <template #icon>
+                            <ArrowCollapseDown :size="14" />
+                        </template>
+                    </NcButton>
+                </div>
             </div>
-        </div>
-        <div class="chart-container">
-            <BarChart :chart-data="bar2.chartData" :options="bar2.chartOptions" ref="barChart" :width="300"
-                :height="320" />
+            <div class="chart-container">
+                <BarChart :chart-data="projectPriority.chartData" :options="projectPriority.chartOptions" ref="projectPriority" :width="200"
+                        :height="570"/>
+            </div>
         </div>
     </div>
 </template>
 
 <script>
+import LineChart from './LineChart.vue'
 import BarChart from './BarChart.vue'
 import GanttChart from './GanttChart.vue'
 import { getCurrentUser } from '@nextcloud/auth'
@@ -51,12 +52,23 @@ import { NcModal, NcButton } from "@nextcloud/vue";
 
 export default {
     name: 'ProjectChart',
-    components: { BarChart, GanttChart, NcButton, FilterVariant, ArrowCollapseDown },
+    components: { BarChart, GanttChart, NcButton, FilterVariant, ArrowCollapseDown, LineChart },
+    props: {
+        startDate: {
+            type: String,
+            required: true
+        },
+
+        endDate: {
+            type: String,
+            default: true
+        }
+    },
     data() {
         return {
             user: getCurrentUser(),
             loaded: false,
-            bar: {
+            projectStatus: {
                 chartData: {
                     labels: [],
                     datasets: [
@@ -72,86 +84,83 @@ export default {
                         }
                     ]
                 },
-
                 chartOptions: {
                     maintainAspectRatio: false,
                     responsive: true,
                     scales: {
-                        xAxes: [{
+                        yAxes: [{
+                            stacked: true,
                             gridLines: {
                                 display: false
                             }
                         }],
-                        yAxes: [{
+                        xAxes: [{
+                            stacked: true,
                             ticks: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                callback: function(value) {
+                                    if (Number.isInteger(value)) {
+                                        return value;
+                                    }
+                                }
                             }
-                        }]
+                        }],
                     },
                     legend: {
-                        display: true,
-                        position: 'bottom',
+                        position: 'top',
                     },
                     tooltips: {
                         enabled: true,
-                    },
-                    title: {
-                        display: true,
-                        text: 'TỔNG CÔNG VIỆC VÀ SỐ CÔNG VIỆC HOÀN THÀNH Ở MỖI DỰ ÁN',
-                        fontSize: 16,
-                        fontColor: '#333'
                     }
                 }
             },
-            bar2: {
+
+            projectPriority: {
                 chartData: {
                     labels: [],
                     datasets: [
                         {
-                            label: 'Gấp',
+                            label: 'Cao',
                             backgroundColor: '#f87979',
                             data: []
                         },
                         {
-                            label: 'Quan trọng',
+                            label: 'Trung bình',
                             backgroundColor: '#4b77a9',
                             data: []
                         },
                         {
-                            label: 'Bình thường',
+                            label: 'Thấp',
                             backgroundColor: '#4b77a9',
                             data: []
                         }
                     ]
                 },
-
                 chartOptions: {
                     maintainAspectRatio: false,
                     responsive: true,
                     scales: {
-                        xAxes: [{
+                        yAxes: [{
                             gridLines: {
                                 display: false
                             }
                         }],
-                        yAxes: [{
+                        xAxes: [{
                             ticks: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                callback: function(value) {
+                                    if (Number.isInteger(value)) {
+                                        return value;
+                                    }
+                                }
                             }
-                        }]
+                        }],
                     },
                     legend: {
-                        display: true,
-                        position: 'bottom',
+                        position: 'top',
                     },
                     tooltips: {
                         enabled: true,
-                    },
-                    title: {
-                        display: true,
-                        text: 'SỐ CÔNG VIỆC THEO TỪNG PHÂN LOẠI',
-                        fontSize: 16,
-                        fontColor: '#333'
                     }
                 }
             },
@@ -162,34 +171,40 @@ export default {
         await this.fetchData()
     },
 
+    watch: {
+        startDate: 'fetchData',
+        endDate: 'fetchData'
+    },
+
     methods: {
         async fetchData() {
+            this.loaded = false;
             try {
-                const workCountResponse = await axios.get(generateUrl(`/apps/qlcv/data/count_works/${this.user.uid}`));
-                const doneWorkResponse = await axios.get(generateUrl(`/apps/qlcv/data/done_works/${this.user.uid}`));
-
-                const workCounts = workCountResponse.data.data;
-                const doneWorks = doneWorkResponse.data.data;
-
-                const labels = workCounts.map(item => item.project_name);
-                const totalWorks = workCounts.map(item => item.work_count);
-                const completedWorks = doneWorks.map(item => item.work_count);
-
-                this.bar.chartData = {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Tổng công việc',
-                            backgroundColor: '#f87979',
-                            data: totalWorks
-                        },
-                        {
-                            label: 'Công việc hoàn thành',
-                            backgroundColor: '#4b77a9',
-                            data: completedWorks
-                        }
-                    ]
+                const params = {
+                    startDate: this.startDate,
+                    endDate: this.endDate
                 };
+                const response = await axios.get(generateUrl(`/apps/qlcv/data/count_works/${this.user.uid}`, { params }));
+
+                const workCounts = response.data.data;
+                const filteredWorkCounts = workCounts.filter(item => item.all_works > 0);
+
+                const labels = filteredWorkCounts.map(item => item.project_name);
+                const all_works = filteredWorkCounts.map(item => item.all_works);
+                const done_work = filteredWorkCounts.map(item => item.done_work);
+
+                const high = filteredWorkCounts.map(item => item.high);
+                const normal = filteredWorkCounts.map(item => item.normal);
+                const low = filteredWorkCounts.map(item => item.low);
+
+                this.projectStatus.chartData.labels = labels;
+                this.projectStatus.chartData.datasets[0].data = all_works;
+                this.projectStatus.chartData.datasets[1].data = done_work;
+
+                this.projectPriority.chartData.labels = labels;
+                this.projectPriority.chartData.datasets[0].data = high;
+                this.projectPriority.chartData.datasets[1].data = normal;
+                this.projectPriority.chartData.datasets[2].data = low;
 
                 this.loaded = true;
 
@@ -197,20 +212,9 @@ export default {
                 console.error('Error fetching data:', e);
             }
         },
+
         downloadBarChart() {
             const chart = this.$refs.barChart.$data._chart;
-            if (chart) {
-                const url = chart.toBase64Image();
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'chart.png';
-                link.click();
-            } else {
-                console.error('Chart instance not found');
-            }
-        },
-        downloadBarChart() {
-            const chart = this.$refs.barChart2.$data._chart;
             if (chart) {
                 const url = chart.toBase64Image();
                 const link = document.createElement('a');
@@ -227,19 +231,53 @@ export default {
 
 <style scoped>
 .main-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    width: 100%;
+    height: 100%
+}
+
+.line-item1, .line-item2 {
     display: flex;
     flex-direction: column;
-    height: 300px;
-    padding: 50px
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    height: 100%
 }
 
 .icon-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.text-container {
+    margin-left: 200px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 .icons {
     display: flex;
     align-items: center;
+    visibility: hidden;
 }
+
+.line-item2:hover,
+.line-item1:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.line-item2:hover .icons,
+.line-item1:hover .icons {
+    visibility: visible;
+}
+
 </style>

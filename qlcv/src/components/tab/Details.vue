@@ -1,6 +1,6 @@
 <template>
 <div class="details">
-    <div class="combo-action">
+    <div class="combo-action" v-show="disableEdit">
         <NcButton type="tertiary" @click="startEditting" v-if="!isEdit" aria-label="Example text">
             <template #icon>
                 <Pencil :size="20" />
@@ -31,13 +31,7 @@
         </div>
         <div class="grid-item">
             <label>Người nhận việc (*)</label>
-            <NcMultiselect v-if="isEdit" ref="assigned_to" class="nc-select" v-model="selectedUser" :options="formatUsers"
-                label="userId" track-by="userId" :user-select="true">
-                <template #singleLabel="{ option }">
-                    <NcListItemIcon v-bind="option" :title="option.userId" :avatar-size="24" :no-margin="true" />
-                </template>
-            </NcMultiselect>
-            <input v-else type="text" v-model="getName" class="input-disabled" :disabled="true"/>
+            <input type="text" v-model="getName" class="input-disabled" :disabled="true"/>
         </div>
         <div class="grid-item">
             <label>Ngày bắt đầu (*)</label>
@@ -83,12 +77,21 @@ export default {
         workId: {
             type: Number,
             required: true
-        }
+        },
+
+        isProjectOwner: {
+            type: Boolean,
+            required: true
+        },
+
+        disabled: {
+      type: Number,
+      required: true
+    },
     },
     data() {
         return {
             work: null,
-            users: [],
             labels: [
                 { text: 'Gấp' },
                 { text: 'Quan trọng' },
@@ -99,23 +102,11 @@ export default {
             full_name: '',
             startDate: null,
             endDate: null,
-            selectedUser: null,
             selectedLabel: null
         }
     },
 
     computed: {
-        formatUsers() {
-            const usersArray = Object.values(this.users);
-            return usersArray.map(user => {
-                return {
-                    userId: user.qlcb_uid,
-                    subtitle: user.full_name,
-                    icon: 'icon-user'
-                };
-            });
-        },
-
         receivedProjectID() {
             return this.$store.state.sharedProjectID;
         },
@@ -130,13 +121,16 @@ export default {
 
         getName() {
             return `${this.initialWork.assigned_to} - ${this.full_name}`
-        }
+        },
+
+        disableEdit() {
+      if(this.disabled == 3) return false
+      else return this.isProjectOwner
+    },
     },
 
     mounted() {
-        this.getUsers()
         this.getWork()
-        // this.getFullName()
     },
 
     methods: {
@@ -157,16 +151,6 @@ export default {
             return `${parts[2]}/${parts[1]}/${parts[0]}`;
         },
 
-        async getUsers() {
-            try {
-                const response = await axios.get(generateUrl('/apps/qlcv/users'));
-                this.users = response.data.users
-
-            } catch (e) {
-                console.error(e)
-            }
-        },
-
         async getWork() {
             try {
                 const response = await axios.get(generateUrl(`/apps/qlcv/work_by_id/${this.workId}`));
@@ -175,12 +159,6 @@ export default {
                 this.getFullName()
                 this.startDate = new Date(this.work.start_date + '')
                 this.endDate = new Date(this.work.end_date + '')
-                this.selectedUser =
-                {
-                    userId: this.work.assigned_to,
-                    subtitle: 'full_name',
-                    icon: 'icon-user'
-                }
             } catch (e) {
                 console.error(e)
             }
@@ -202,7 +180,8 @@ export default {
                     start_date: this.mysqlDateFormatter(this.startDate),
                     end_date: this.mysqlDateFormatter(this.endDate),
                     label: this.selectedLabel.text,
-                    assigned_to: this.selectedUser.userId,
+                    assigned_to: null,
+                    status: null,
                     work_id: this.work.work_id
                 });
                 this.isEdit = false

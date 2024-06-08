@@ -94,7 +94,8 @@ class WorkController extends Controller
         $start_date,
         $end_date,
         $label,
-        $assigned_to
+        $assigned_to,
+        $status
     ) {
         $result = $this->workService->updateWork(
             $work_id,
@@ -103,7 +104,8 @@ class WorkController extends Controller
             $start_date,
             $end_date,
             $label,
-            $assigned_to
+            $assigned_to,
+            $status
         );
         // $this->notificationHelper->notifyNewWork($assigned_to, $work_name, 'TEST');
         return new JSONResponse($result);

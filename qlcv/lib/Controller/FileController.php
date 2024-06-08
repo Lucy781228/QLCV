@@ -123,23 +123,8 @@ class FileController extends Controller
                 ->get("QLCV");
             $fileNodes = $qlcvFolder->getById($file_id);
 
-            if (empty($fileNodes)) {
-                return new JSONResponse(
-                    ["error" => "File not found"],
-                    Http::STATUS_NOT_FOUND
-                );
-            }
-
             $file = $fileNodes[0];
-            if ($file->getOwner()->getUID() !== $currentUser->getUID()) {
-                return new JSONResponse(
-                    [
-                        "error" =>
-                            "You do not have permission to delete this file",
-                    ],
-                    Http::STATUS_FORBIDDEN
-                );
-            }
+            $file->delete();
 
             // Delete the file record from the database
             $query = $this->db->getQueryBuilder();
@@ -245,9 +230,9 @@ class FileController extends Controller
                     $fileList[] = [
                         "file_id" => $found->getId(),
                         "file_name" => $found->getName(),
-                        "size" => $found->getSize(), // Lấy kích thước file
-                        "mtime" => $found->getMTime(), // Lấy thời gian chỉnh sửa cuối
-                        "owner" => $found->getOwner()->getUID(), // Lấy thời gian chỉnh sửa cuối
+                        "size" => $found->getSize(),
+                        "mtime" => $found->getMTime(),
+                        "owner" => $found->getOwner()->getUID(),
                     ];
                 }
             }

@@ -139,7 +139,7 @@
 				</NcAppNavigationItem>
 			</div>
 			<template #footer>
-				<NcAppNavigationItem :exact="true" name="Phân tích và thống kê" @click="" :to="'/analyst'">
+				<NcAppNavigationItem :exact="true" name="Thống kê và báo cáo" @click="" :to="'/analyst'">
 					<template #icon>
 						<Poll :size="20" />
 					</template>
@@ -148,7 +148,7 @@
 		</NcAppNavigation>
 
 		<NcAppContent class="parent">
-			<router-view />
+			<router-view @close="stopModal"/>
 		</NcAppContent>
 		<NcModal :show="isDelete" :canClose="false" size="small">
 			<div class="modal__content">

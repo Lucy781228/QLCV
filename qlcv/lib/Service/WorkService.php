@@ -61,10 +61,10 @@ class WorkService {
                   ])
                   ->execute();
             
-            $work_id = $this->db->lastInsertId('qlcv_work');
+            $work_id = $this->db->lastInsertId('oc_qlcv_work');
     
             foreach ($contents as $content) {
-                $this->taskService->create($work_id, $content, 0);
+                $this->taskService->createTask($work_id, $content, 0);
             }    
             $this->db->commit();
             $query = $this->db->getQueryBuilder();
@@ -123,14 +123,15 @@ class WorkService {
         }
     }
 
-    public function updateWork($work_id, $work_name, $description, $start_date, $end_date, $label, $assigned_to) {
+    public function updateWork($work_id, $work_name, $description, $start_date, $end_date, $label, $assigned_to, $status) {
         try {
             $sql = 'UPDATE `oc_qlcv_work` SET `work_name` = COALESCE(?, `work_name`), 
                                                 `description` = COALESCE(?, `description`), 
                                                 `start_date` = COALESCE(?, `start_date`), 
                                                 `end_date` = COALESCE(?, `end_date`), 
                                                 `label` = COALESCE(?, `label`),
-                                                `assigned_to` = COALESCE(?, `assigned_to`)
+                                                `assigned_to` = COALESCE(?, `assigned_to`),
+                                                `status` = COALESCE(?, `status`)
                                                 WHERE `work_id` = ?';
             $query = $this->db->prepare($sql);
             
@@ -141,6 +142,7 @@ class WorkService {
                 $end_date,
                 $label,
                 $assigned_to,
+                $status,
                 $work_id
             ]);
     
@@ -160,6 +162,30 @@ class WorkService {
             return ["status" => "success"];
         } catch (Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function calculateDaysToDeadline($workId) {
+        try {
+            $query = $this->db->getQueryBuilder();
+            $query->select("end_date")
+                  ->from("qlcv_work")
+                  ->where($query->expr()->eq("work_id", $query->createNamedParameter($workId)));
+
+            $result = $query->execute();
+            $work = $result->fetch();
+
+            if (!$work) {
+                throw new Exception("Không tìm thấy công việc với ID: " . $workId);
+            }
+
+            $endDate = new DateTime($work['end_date']);
+            $today = new DateTime();
+            $interval = $today->diff($endDate);
+
+            return $interval->format('%r%a');
+        } catch (Exception $e) {
+            throw new Exception("Lỗi khi tính toán ngày đến hạn của công việc: " . $e->getMessage());
         }
     }
 }

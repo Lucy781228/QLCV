@@ -1,36 +1,61 @@
 <template>
   <div class="files">
-    <input type="file" @change="handleFileChange" />
-    <ul>
-      <li v-for="file in files" :key="file.file_id">
-        <NcListItem :title="file.file_name" :bold="false" :details="file.mtime">
-          <template #subtitle>
-            {{ file.size }}
-          </template>
-          <template #actions>
-            <NcActionButton @click="downloadFile(file.file_id)">
-              Download
-            </NcActionButton>
-            <NcActionButton @click="deleteFile(file.file_id)">
-              Delete
-            </NcActionButton>
-          </template>
-        </NcListItem>
-      </li>
-    </ul>
+    <div class="grid-container">
+      <div class="grid-item upload">
+        <TrayArrowUp :size="70" />
+        <NcButton :wide="true" type="primary" @click="triggerFileInput">Tải lên</NcButton>
+        <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
+      </div>
+      <div class="grid-item file-list">
+        <div class="scrollable-list">
+          <ul>
+            <li v-for="file in files" :key="file.file_id">
+              <NcListItem :title="file.file_name" :bold="false" :details="formatDateTime(file.mtime)">
+                <template #subtitle>
+                  {{ formatFileSize(file.size) }}
+                </template>
+                <template #actions>
+                    <NcActionButton @click="downloadFile(file.file_id)">
+                      <template #icon>
+                        <ArrowCollapseDown :size="20" />
+                      </template>
+                      Tải xuống
+                    </NcActionButton>
+                    <NcActionButton @click="deleteFile(file.file_id)" v-if="user.uid == file.owner">
+                      <template #icon>
+                        <Delete :size="20" />
+                      </template>
+                      Xóa
+                    </NcActionButton>
+                </template>
+              </NcListItem>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from "@nextcloud/axios";
 import { getCurrentUser } from '@nextcloud/auth'
-import { NcActionButton, NcListItem } from "@nextcloud/vue";
+import { NcActionButton, NcListItem, NcButton, NcActions } from "@nextcloud/vue";
+import ArrowCollapseDown from 'vue-material-design-icons/ArrowCollapseDown.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import TrayArrowUp from 'vue-material-design-icons/TrayArrowUp.vue'
 
 export default {
   name: 'File',
   components: {
     NcListItem,
     NcActionButton,
+    NcButton,
+    NcActions,
+    ArrowCollapseDown,
+    Delete,
+    TrayArrowUp
   },
   props: {
     workId: {
@@ -62,7 +87,6 @@ export default {
     this.getFiles();
   },
 
-
   computed: {
     shareUser() {
       return this.user.uid == this.assignedTo ? this.owner : this.assignedTo
@@ -70,6 +94,9 @@ export default {
   },
 
   methods: {
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
     handleFileChange(event) {
       this.file = event.target.files[0];
       this.uploadFile();
@@ -83,7 +110,6 @@ export default {
           }
         });
         this.files = response.data.files;
-
 
         console.log(this.files)
       } catch (error) {
@@ -146,6 +172,24 @@ export default {
       } catch (error) {
         console.error('Error deleting file', error);
       }
+    },
+    formatFileSize(size) {
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let unitIndex = 0;
+      let fileSize = size;
+
+      console.log(size)
+
+      while (fileSize >= 1024 && unitIndex < units.length - 1) {
+        fileSize /= 1024;
+        unitIndex++;
+      }
+
+      return `${fileSize.toFixed(1)} ${units[unitIndex]}`;
+    },
+    formatDateTime(dateTime) {
+      const date = new Date(dateTime);
+      return date.toLocaleString();
     }
   }
 };
@@ -153,7 +197,42 @@ export default {
 
 <style scoped>
 .files {
-  height: 540px;
+  height: 500px;
+  padding: 20px;
 }
 
+.grid-container {
+  display: grid;
+  grid-template-columns: 2fr 4fr;
+  gap: 20px;
+  height: 100%;
+}
+
+.grid-item.upload {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 40px
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+}
+
+li {
+  margin-bottom: 10px;
+  width: 90%
+}
+
+.scrollable-list {
+  overflow-y: auto;
+  max-height: 480px;
+  height: 480px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  word-wrap: break-word;
+}
 </style>

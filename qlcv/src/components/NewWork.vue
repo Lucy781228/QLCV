@@ -7,7 +7,13 @@
             <div class="grid-item grid-view-b">
                 <div class="grid-item-b full-width">
                     <label>Tên công việc (*)</label>
-                    <input type="text" v-model="work.work_name" />
+                    <input type="text" v-model="work.work_name" @blur="handleFieldFocus('work_name')" />
+                    <div class="validation-error-container">
+                        <span class="validation-error"
+                            v-if="touchedFields.work_name && !validation.requiredString(work.work_name)">
+                            {{ validationMessages['required'] }}
+                        </span>
+                    </div>
                 </div>
                 <div class="grid-item-b">
                     <label>Nhãn</label>
@@ -23,15 +29,43 @@
                                 :no-margin="true" />
                         </template>
                     </NcMultiselect>
+                    <div class="validation-error-container">
+                        <span class="validation-error"
+                            v-if="touchedFields.assigned_to && !validation.requiredObject(work.assigned_to)">
+                            {{ validationMessages['required'] }}
+                        </span>
+                    </div>
                 </div>
                 <div class="grid-item-b">
                     <label>Ngày bắt đầu (*)</label>
-                    <NcDatetimePicker ref="start_date" format="DD/MM/YYYY" class="nc-picker"
+                    <NcDatetimePicker id="start_date" ref="start_date" format="DD/MM/YYYY" class="nc-picker" :clearable="true"
                         v-model="work.start_date" />
+                    <div class="validation-error-container">
+                        <span class="validation-error"
+                            v-if="touchedFields.start_date && !validation.requiredObject(work.start_date)">
+                            {{ validationMessages['required'] }}
+                        </span>
+                        <span class="validation-error" v-else-if="touchedFields.start_date && !isStartDateValid">
+                            {{ validationMessages['start_date'] }}
+                        </span>
+                    </div>
                 </div>
                 <div class="grid-item-b">
                     <label>Ngày kết thúc (*)</label>
-                    <NcDatetimePicker ref="end_date" format="DD/MM/YYYY" class="nc-picker" v-model="work.end_date" />
+                    <NcDatetimePicker id="end_date" ref="end_date" format="DD/MM/YYYY" class="nc-picker" v-model="work.end_date"
+                        :clearable="true" />
+                    <div class="validation-error-container">
+                        <span class="validation-error"
+                            v-if="touchedFields.end_date && !validation.requiredObject(work.end_date)">
+                            {{ validationMessages['required'] }}
+                        </span>
+                        <span class="validation-error" v-else-if="touchedFields.end_date && !isEndDateValid">
+                            {{ validationMessages['start_date'] }}
+                        </span>
+                        <span class="validation-error" v-if="!isValidDate">
+                            Ngày kết thúc phải sau ngày bắt đầu
+                        </span>
+                    </div>
                 </div>
                 <div class="grid-item-b full-width">
                     <label>Mô tả</label>
@@ -51,11 +85,6 @@
                 </div>
                 <div class="task-field">
                     <input type="text" v-model="taskContent" placeholder="Thêm tác vụ" />
-                    <NcButton type="tertiary" @click="resetTaskField" ariaLabel="A">
-                        <template #icon>
-                            <Close :size="20" />
-                        </template>
-                    </NcButton>
                     <NcButton type="primary" :disabled="!taskContent" @click="addToTaskField" ariaLabel="A">
                         <template #icon>
                             <ArrowRight :size="20" />
@@ -68,7 +97,7 @@
             <NcButton type="secondary" @click="cancel" ariaLabel="A">
                 Hủy
             </NcButton>
-            <NcButton @click="createWork" type="primary" ariaLabel="A">
+            <NcButton @click="createWork" type="primary" ariaLabel="A" :disabled="!isFormValid">
                 Thêm
             </NcButton>
         </div>
@@ -83,6 +112,8 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import Close from 'vue-material-design-icons/Close.vue'
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import validation from '../validate.js';
+import { getCurrentUser } from '@nextcloud/auth'
 
 export default {
     name: 'NewWork',
@@ -97,6 +128,18 @@ export default {
     },
     data() {
         return {
+            isValidDate: true,
+            project: null,
+            dateRange: {
+                startDate: null,
+                endDate: null,
+            },
+            touchedFields: {
+                work_name: false,
+                start_date: false,
+                end_date: false,
+                assigned_to: false
+            },
             work: {
                 work_name: '',
                 description: '',
@@ -107,16 +150,48 @@ export default {
             },
             users: [],
             labels: [
-                { text: 'Gấp' },
-                { text: 'Quan trọng' },
-                { text: 'Bình thường' }
+                { text: 'Cao' },
+                { text: 'Trung bình' },
+                { text: 'Thấp' }
             ],
             taskContent: '',
             tasks: [],
+            validationMessages: {
+                'required': 'Không được để trống',
+                'start_date': null,
+            },
+            user: getCurrentUser(),
+        }
+    },
+
+    watch: {
+        work(newVal) {
+            if (newVal) {
+                if (this.work.start_date != null && this.work.end_date != null) {
+                    this.isValidDate = this.work.start_date < this.work.end_date
+                }
+            }
+        },
+
+        dateRange: {
+            handler(newVal) {
+                this.validationMessages.start_date = `Từ ${this.formatDateToDDMMYYYY(newVal.startDate)} đến ${this.formatDateToDDMMYYYY(newVal.endDate)}`;
+            },
+            deep: true
         }
     },
 
     computed: {
+
+        isFormValid() {
+            return this.isValidDate &&
+                this.validation.requiredObject(this.work.start_date) &&
+                this.validation.requiredObject(this.work.end_date) &&
+                this.validation.requiredObject(this.work.assigned_to) &&
+                this.validation.requiredString(this.work.work_name) &&
+                this.isEndDateValid && this.isEndDateValid && this.tasks.length
+        },
+
         formatUsers() {
             const usersArray = Object.values(this.users);
             return usersArray.map(user => {
@@ -131,17 +206,54 @@ export default {
         receivedProjectID() {
             return this.$store.state.sharedProjectID;
         },
+
+        validation() {
+            return validation;
+        },
+
+        isStartDateValid() {
+            if (!this.work.start_date) return false;
+            const dateObj = new Date(this.work.start_date);
+            console.log(new Date(this.dateRange.startDate))
+            console.log(dateObj)
+            return dateObj >= new Date(this.dateRange.startDate) && dateObj <= new Date(this.dateRange.endDate);
+        },
+
+        isEndDateValid() {
+            if (!this.work.end_date) return false;
+            const dateObj = new Date(this.work.end_date);
+            return dateObj >= new Date(this.dateRange.startDate) && dateObj <= new Date(this.dateRange.endDate);
+        },
     },
 
     mounted() {
         this.getUsers()
-        this.scrollToBottom();
-        // this.attachBlurListener(this.$refs.qlcb_uid, 'qlcb_uid');
-        // this.attachBlurListener(this.$refs.gender, 'gender');
-        // this.attachBlurListener(this.$refs.date_of_birth, 'date_of_birth');
+        this.getCurrentProject()
+        this.attachBlurListener(this.$refs.assigned_to, 'assigned_to');
+        this.attachBlurListener(this.$refs.start_date, 'start_date');
+        this.attachBlurListener(this.$refs.end_date, 'end_date');
     },
 
     methods: {
+        formatDateToDDMMYYYY(inputDate) {
+            const parts = inputDate.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        },
+
+        attachBlurListener(componentRef, fieldName) {
+            if (componentRef && componentRef.$el) {
+                const input = componentRef.$el.querySelector('input');
+                if (input) {
+                    input.addEventListener('blur', () => {
+                        this.handleFieldFocus(fieldName);
+                    });
+                }
+            }
+        },
+
+        handleFieldFocus(fieldName) {
+            this.touchedFields[fieldName] = true;
+        },
         async getUsers() {
             try {
                 const response = await axios.get(generateUrl('/apps/qlcv/users'));
@@ -150,10 +262,6 @@ export default {
             } catch (e) {
                 console.error(e)
             }
-        },
-
-        resetTaskField() {
-            this.taskContent = ''
         },
 
         addToTaskField() {
@@ -193,8 +301,11 @@ export default {
                     end_date: this.mysqlDateFormatter(this.work.end_date),
                     label: this.work.label.text,
                     assigned_to: this.work.assigned_to.userId,
-                    contents: this.tasks
+                    contents: this.tasks,
+                    owner: this.user.uid
                 });
+
+                console.log(response.data)
 
                 showSuccess("Tạo thành công.")
                 this.cancel()
@@ -205,8 +316,19 @@ export default {
         },
 
         cancel() {
-         this.$router.push(`/project/${this.receivedProjectID}`);
-     },
+            this.$router.push(`/project/${this.receivedProjectID}`);
+        },
+
+        async getCurrentProject() {
+            try {
+                const response = await axios.get(generateUrl(`/apps/qlcv/project/${this.receivedProjectID}`))
+                this.dateRange.endDate = response.data.project.end_date;
+                this.dateRange.startDate = response.data.project.start_date;
+
+            } catch (e) {
+                console.error(e)
+            }
+        },
     }
 }
 </script>
@@ -229,7 +351,7 @@ export default {
 .new-work .grid-view-b {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-row-gap: 20px;
+    grid-row-gap: 10px;
     grid-column-gap: 20px;
 }
 
@@ -273,10 +395,6 @@ input {
     height: 88px !important;
     width: 100%;
     resize: none;
-}
-
-::v-deep .mx-input {
-    height: 44px !important;
 }
 
 ::v-deep .nc-picker {
@@ -360,5 +478,14 @@ input {
 .list-item .close-icon {
     padding: 10px;
     box-sizing: border-box;
+}
+
+.validation-error {
+    color: red;
+    font-size: 0.8em;
+}
+
+.validation-error-container {
+    height: 10px;
 }
 </style>

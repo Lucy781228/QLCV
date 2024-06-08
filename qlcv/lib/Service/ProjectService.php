@@ -14,7 +14,7 @@ class ProjectService {
         $this->db = $db;
     }
 
-    public function createProject($project_id, $project_name, $user_id, $start_date, $end_date) {
+    public function createProject($project_id, $project_name, $user_id, $start_date, $end_date, $status) {
 
         try {
             $query = $this->db->getQueryBuilder();
@@ -25,6 +25,7 @@ class ProjectService {
                       "user_id" => $query->createNamedParameter($user_id),
                       "start_date" => $query->createNamedParameter($start_date),
                       "end_date" => $query->createNamedParameter($end_date),
+                      "status" => $query->createNamedParameter($status),
                   ])
                   ->execute();
 
@@ -57,12 +58,32 @@ class ProjectService {
         }
     }
 
-    public function updateProject($project_id, $project_name, $user_id, $start_date, $end_date) {
+    public function getAProject($project_id) {
+        try {
+            $query = $this->db->getQueryBuilder();
+    
+            $query->select("p.*")
+                  ->from("qlcv_project", "p")
+                  ->where(
+                      $query->expr()->eq("p.project_id", $query->createNamedParameter($project_id))
+                  );
+    
+            $result = $query->execute();
+            $data = $result->fetch();
+    
+            return $data;
+        } catch (\Exception $e) {
+            throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function updateProject($project_id, $project_name, $user_id, $start_date, $end_date, $status) {
         try {
             $sql = 'UPDATE `oc_qlcv_project` SET `project_name` = COALESCE(?, `project_name`), 
                                                 `user_id` = COALESCE(?, `user_id`), 
                                                 `start_date` = COALESCE(?, `start_date`), 
-                                                `end_date` = COALESCE(?, `end_date`)
+                                                `end_date` = COALESCE(?, `end_date`),
+                                                `status` = COALESCE(?, `status`)
                                                 WHERE `project_id` = ?';
             $query = $this->db->prepare($sql);
             
@@ -71,6 +92,7 @@ class ProjectService {
                 $user_id,
                 $start_date,
                 $end_date,
+                $status,
                 $project_id,
             ]);
     
@@ -90,6 +112,29 @@ class ProjectService {
             return ["status" => "success"];
         } catch (Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function setDoingProject() {
+        try {
+            $query = $this->db->getQueryBuilder();
+            $query->select("p.project_id", "p.project_name")
+                  ->from("qlcv_project", "p")
+                  ->where($query->expr()->eq("p.status", 0));
+    
+            $result = $query->execute();
+            $projects = $result->fetchAll();
+    
+            $projectIds = array_column($projects, 'project_id');
+            $query = $this->db->getQueryBuilder();
+            $query->update("qlcv_project")
+                  ->set("status", 1)
+                  ->where($query->expr()->in("project_id", $query->createNamedParameter($projectIds, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)));
+    
+            $affectedRows = $query->execute();
+            return "success";
+        } catch (Exception $e) {
+            return "fail";
         }
     }
 }
