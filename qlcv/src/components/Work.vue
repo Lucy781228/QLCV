@@ -16,17 +16,22 @@
                 <NcAvatar :display-name="assignedTo" />
                 <div @click.stop.prevent>
                     <NcActions v-if="isProjectOwner">
+                        <template #icon>
+                            <DotsHorizontal :size="16" />
+                        </template>
                         <NcActionButton type="tertiary" @click.stop.prevent="deleteWork" :closeAfterClick="true">
                             <template #icon>
                                 <Delete :size="16" />Xóa
                             </template>
                         </NcActionButton>
-                        <NcActionButton type="tertiary" @click.stop.prevent="updateStatus" v-if="status==2" :closeAfterClick="true">
+                        <NcActionButton type="tertiary" @click.stop.prevent="updateStatus" v-if="status == 2"
+                            :closeAfterClick="true">
                             <template #icon>
                                 <Check :size="16" />Phê duyệt
                             </template>
                         </NcActionButton>
-                        <NcActionButton type="tertiary" @click.stop.prevent="updateWork" v-if="status==2" :closeAfterClick="true">
+                        <NcActionButton type="tertiary" @click.stop.prevent="updateWork" v-if="status == 2"
+                            :closeAfterClick="true">
                             <template #icon>
                                 <Close :size="16" />Từ chối
                             </template>
@@ -48,6 +53,7 @@ import { getCurrentUser } from '@nextcloud/auth'
 import axios from "@nextcloud/axios";
 import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 
 export default {
     name: 'Work',
@@ -58,7 +64,8 @@ export default {
         NcAvatar,
         NcActions,
         Check,
-        Close
+        Close,
+        DotsHorizontal
     },
 
     data() {
@@ -103,6 +110,12 @@ export default {
         }
     },
 
+    computed: {
+        receivedProjectID() {
+            return this.$store.state.sharedProjectID;
+        },
+    },
+
     methods: {
         textStyle(text) {
             const styles = {
@@ -118,7 +131,7 @@ export default {
                     borderRadius: '10px',
                     padding: '2px 5px',
                 },
-                'Trung bình': { 
+                'Trung bình': {
                     backgroundColor: '#F1DB50',
                     color: 'black',
                     borderRadius: '10px',
@@ -155,9 +168,10 @@ export default {
                     label: null,
                     assigned_to: null,
                     status: this.newStatus,
-                    work_id: this.workId
+                    work_id: this.workId,
+                    project_id: this.receivedProjectID
                 });
-            this.$emit('update')
+                this.$emit('update')
                 showSuccess("Cập nhật thành công.")
             } catch (error) {
                 console.error("Lỗi khi tạo công việc: ", error);

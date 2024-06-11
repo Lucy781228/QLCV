@@ -36,16 +36,14 @@ class ProjectController extends Controller
         $project_id,
         $project_name,
         $user_id,
-        $start_date,
-        $end_date,
+        $description,
         $status
     ) {
         $result = $this->projectService->createProject(
             $project_id,
             $project_name,
             $user_id,
-            $start_date,
-            $end_date,
+            $description,
             $status
         );
         return new JSONResponse($result);
@@ -79,16 +77,14 @@ class ProjectController extends Controller
         $project_id,
         $project_name,
         $user_id,
-        $start_date,
-        $end_date,
+        $description,
         $status
     ) {
         $result = $this->projectService->updateProject(
             $project_id,
             $project_name,
             $user_id,
-            $start_date,
-            $end_date,
+            $description,
             $status
         );
         // $this->notificationHelper->notifyRenameProject('user1', 'TEST', $project_name);

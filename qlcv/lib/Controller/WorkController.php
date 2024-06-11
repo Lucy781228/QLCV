@@ -14,14 +14,13 @@ use OCA\QLCV\Service\WorkService;
 class WorkController extends Controller
 {
     private $notificationHelper;
-
     private $workService;
 
     public function __construct(
         $AppName,
         IRequest $request,
         NotificationManager $notificationManager,
-        WorkService $workService
+        WorkService $workService,
     ) {
         parent::__construct($AppName, $request);
         $this->notificationHelper = new NotificationHelper(
@@ -95,7 +94,8 @@ class WorkController extends Controller
         $end_date,
         $label,
         $assigned_to,
-        $status
+        $status,
+        $project_id
     ) {
         $result = $this->workService->updateWork(
             $work_id,
@@ -105,7 +105,8 @@ class WorkController extends Controller
             $end_date,
             $label,
             $assigned_to,
-            $status
+            $status,
+            $project_id
         );
         // $this->notificationHelper->notifyNewWork($assigned_to, $work_name, 'TEST');
         return new JSONResponse($result);

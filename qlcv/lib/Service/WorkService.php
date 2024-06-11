@@ -7,15 +7,18 @@ use OCP\IDBConnection;
 use Exception;
 use DateTime;
 use OCA\QLCV\Service\TaskService;
+use OCA\QLCV\Service\ProjectService;
 
 class WorkService {
     private $db;
 
     private $taskService;
-
-    public function __construct(IDBConnection $db, TaskService $taskService) {
+    private $projectService;
+    
+    public function __construct(IDBConnection $db, TaskService $taskService, ProjectService $projectService) {
         $this->db = $db;
         $this->taskService = $taskService;
+        $this->projectService = $projectService;
     }
 
     public function getAllWorks() {
@@ -123,7 +126,7 @@ class WorkService {
         }
     }
 
-    public function updateWork($work_id, $work_name, $description, $start_date, $end_date, $label, $assigned_to, $status) {
+    public function updateWork($work_id, $work_name, $description, $start_date, $end_date, $label, $assigned_to, $status, $project_id) {
         try {
             $sql = 'UPDATE `oc_qlcv_work` SET `work_name` = COALESCE(?, `work_name`), 
                                                 `description` = COALESCE(?, `description`), 
@@ -145,8 +148,9 @@ class WorkService {
                 $status,
                 $work_id
             ]);
-    
-            return ["status" => "success"];
+
+            $result = $this->projectService->updateProjectStatus($project_id);
+            return ["status" => "success", "isProjectDone" => $result];
         } catch (\Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
         }

@@ -12,6 +12,7 @@ function loadState() {
         sharedTitle: 'Tác vụ sắp tới',
         sharedProjectOwner: '',
         sharedProjectID: 0,
+        sharedProjectStatus: 0,
     };
 }
 
@@ -28,6 +29,10 @@ export default new Vuex.Store({
         },
         updateProject(state, value) {
             state.sharedProjectID = value;
+            localStorage.setItem('store', JSON.stringify(state));
+        },
+        updateProjectStatus(state, value) {
+            state.sharedProjectStatus = value;
             localStorage.setItem('store', JSON.stringify(state));
         }
     }

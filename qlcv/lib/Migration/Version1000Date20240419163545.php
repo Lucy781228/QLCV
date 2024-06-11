@@ -77,11 +77,9 @@ class Version1000Date20240419163545 extends SimpleMigrationStep
                 "notnull" => true,
                 "length" => 64,
             ]);
-            $table->addColumn("start_date", "date", [
-                "notnull" => true,
-            ]);
-            $table->addColumn("end_date", "date", [
-                "notnull" => true,
+            $table->addColumn("description", "string", [
+                "notnull" => false,
+                "length" => 255,
             ]);
             $table->addColumn("status", "smallint", [
                 "unsigned" => true,
@@ -108,7 +106,7 @@ class Version1000Date20240419163545 extends SimpleMigrationStep
             ]);
             $table->addColumn("description", "string", [
                 "notnull" => false,
-                "length" => 1000,
+                "length" => 255,
             ]);
             $table->addColumn("status", "smallint", [
                 "unsigned" => true,
@@ -175,6 +173,10 @@ class Version1000Date20240419163545 extends SimpleMigrationStep
             $table->addColumn("work_id", "integer", [
                 "notnull" => true,
                 "unsigned" => true,
+            ]);
+            $table->addColumn("uploaded_by", "string", [
+                "notnull" => true,
+                "length" => 64,
             ]);
 
             $table->setPrimaryKey(["file_id"]);

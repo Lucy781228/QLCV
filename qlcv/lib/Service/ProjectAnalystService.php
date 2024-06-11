@@ -14,37 +14,43 @@ class ProjectAnalystService
 
     public function getProjectIds($startDate, $endDate, $userId)
     {
-        $query = $this->db->getQueryBuilder();
-        $query
-            ->select("project_id", "project_name")
-            ->from("qlcv_project")
-            ->where(
-                $query
-                    ->expr()
-                    ->eq("user_id", $query->createNamedParameter($userId))
-            );
+        // Define your base SQL query with placeholders
+        $sql = "
+            SELECT
+                p.project_id,
+                p.project_name,
+                MIN(w.start_date) AS project_start_date,
+                MAX(w.end_date) AS project_end_date
+            FROM
+                oc_qlcv_project p
+            LEFT JOIN
+                oc_qlcv_work w ON p.project_id = w.project_id
+            WHERE
+                p.user_id = :userId
+        ";
+    
+        // Initialize your parameters array with the named parameter `userId`
+        $params = ['userId' => $userId];
+    
+        // Add additional conditions and associated parameters if needed
         if ($startDate !== null) {
-            $query->andWhere(
-                $query
-                    ->expr()
-                    ->gte(
-                        "start_date",
-                        $query->createNamedParameter($startDate)
-                    )
-            );
+            $sql .= " AND w.start_date >= :startDate";
+            $params['startDate'] = $startDate;
         }
-
+    
         if ($endDate !== null) {
-            $query->andWhere(
-                $query
-                    ->expr()
-                    ->lte("end_date", $query->createNamedParameter($endDate))
-            );
+            $sql .= " AND w.end_date <= :endDate";
+            $params['endDate'] = $endDate;
         }
-
-        $query->orderBy("start_date", "ASC");
-
-        return $query->execute()->fetchAll();
+    
+        // Add GROUP BY and ORDER BY clauses
+        $sql .= " GROUP BY p.project_id ORDER BY MIN(w.start_date) ASC";
+    
+        // Prepare and execute the query with the parameter array
+        $stmt = $this->db->executeQuery($sql, $params);
+    
+        // Fetch and return results
+        return $stmt->fetchAll();
     }
 
     public function countWorksPerProject($startDate, $endDate, $userId)
@@ -57,6 +63,9 @@ class ProjectAnalystService
                 "project_id" => $project["project_id"],
                 "project_name" => $project["project_name"],
                 "all_works" => 0,
+                "todo_work" => 0,
+                "doing_work" => 0,
+                "pending_work" => 0,
                 "done_work" => 0,
                 "high" => 0,
                 "normal" => 0,
@@ -64,6 +73,9 @@ class ProjectAnalystService
             ];
     
             $projectResult["all_works"] = $this->countWorksByStatus($project["project_id"], null);
+            $projectResult["todo_work"] = $this->countWorksByStatus($project["project_id"], 0);
+            $projectResult["doing_work"] = $this->countWorksByStatus($project["project_id"], 1);
+            $projectResult["pending_work"] = $this->countWorksByStatus($project["project_id"], 2);
             $projectResult["done_work"] = $this->countWorksByStatus($project["project_id"], 3);
             $projectResult["high"] = $this->countWorksByLabel($project["project_id"], "Cao");
             $projectResult["normal"] = $this->countWorksByLabel($project["project_id"], "Trung bình");

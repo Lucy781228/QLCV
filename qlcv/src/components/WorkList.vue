@@ -10,7 +10,7 @@
                 </h1>
             </template>
             <template #action>
-                <NcButton ariaLabel="A" to="/newwork" type="primary">
+                <NcButton ariaLabel="A" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID} }" type="primary">
                     Thêm công việc
                 </NcButton>
             </template>
@@ -32,14 +32,15 @@
                             <ChartGantt :size="20" />
                         </template>
                     </NcButton>
-                    <NcButton type="tertiary" to="/newwork" aria-label="Example text" v-if="isProjectOwner">
+                    <NcButton type="tertiary" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID} }"
+                     aria-label="Example text" v-if="isProjectOwner">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
                     </NcButton>
                 </div>
             </div>
-            <div class="second-header">
+            <div class="second-header" v-if="projectStatus==1">
                 <div class="grid-column-header" v-for="status in [0, 1, 2, 3]" :key="status">
                     <h4>{{ columnHeaders[status] }}</h4>
                 </div>
@@ -72,7 +73,7 @@
         </NcModal>
     </div>
     <div class="chart" v-else>
-        <router-view/>
+        <router-view @back-to-worklist="getWorks" />
     </div>
 </template>
 
@@ -116,7 +117,8 @@ export default {
             showGantt: false,
             isDelete: false,
             workId: 0,
-            showEmpty: true
+            showEmpty: true,
+            projectStatus: null
         };
     },
 
@@ -133,7 +135,7 @@ export default {
             return this.$store.state.sharedProjectOwner;
         },
         isChildRoute() {
-            return this.$route.name !== 'project-gantt';
+            return this.$route.name !== 'project-gantt' && this.$route.name !== 'new-work';
         },
         isProjectOwner() {
             return this.user.uid==this.receivedUserID;
@@ -152,6 +154,7 @@ export default {
             immediate: true,
             handler(newVal) {
                 if (newVal && this.receivedProjectID) {
+                    this.getProject()
                     this.getWorks();
                 }
             }
@@ -189,10 +192,9 @@ export default {
                     }
                 });
                 this.works = response.data.works;
-                this.filteredWorks = JSON.parse(JSON.stringify(this.works));
+                this.filteredWorks = JSON.parse(JSON.stringify(this.works))
                 this.showEmpty = false
-
-                if(this.works.length && this.completedWorksCount == this.works.length) this.updateProject()
+                this.$emit('close')
             } catch (e) {
                 console.error(e)
             }
@@ -202,6 +204,16 @@ export default {
             try {
                 const response = await axios.get(generateUrl(`/apps/qlcv/work_by_id/${id}`));
                 this.work = response.data.work
+
+            } catch (e) {
+                console.error(e)
+            }
+        },
+
+        async getProject(id) {
+            try {
+                const response = await axios.get(generateUrl(`/apps/qlcv/project/${this.receivedProjectID}`));
+                this.projectStatus = response.data.project.status
 
             } catch (e) {
                 console.error(e)
@@ -226,22 +238,6 @@ export default {
 
         stopModal() {
             this.isDelete = false
-        },
-
-        async updateProject() {
-            try {
-                const response = await axios.put('/apps/qlcv/update_project', {
-                    start_date: null,
-                    end_date: null,
-                    project_name: null,
-                    user_id: null,
-                    project_id: this.receivedProjectID,
-                    status: 2
-                });
-                this.$emit('close');
-            } catch (e) {
-                console.error(e)
-            }
         },
     }
 }
