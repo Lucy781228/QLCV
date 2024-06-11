@@ -41,7 +41,7 @@ return [
 
         // Project
         ['name' => 'Project#createProject', 'url' => '/create_project', 'verb' => 'POST'],
-        ['name' => 'Project#getProjects', 'url' => '/projects/{user_id}', 'verb' => 'GET'],
+        ['name' => 'Project#getProjects', 'url' => '/projects', 'verb' => 'GET'],
         ['name' => 'Project#getAProject', 'url' => '/project/{project_id}', 'verb' => 'GET'],
         ['name' => 'Project#updateProject', 'url' => '/update_project', 'verb' => 'PUT'],
         ['name' => 'Project#deleteProject', 'url' => '/delete_project/{project_id}', 'verb' => 'DELETE'],

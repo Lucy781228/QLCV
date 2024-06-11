@@ -8,6 +8,8 @@ use OCP\IDBConnection;
 
 class FileService {
     private $db;
+    private $rootFolder;
+    private $shareManager;
 
     public function __construct(IDBConnection $db) {
         $this->db = $db;

@@ -355,7 +355,7 @@ export default {
           project_id: this.receivedProjectID
         });
         this.status = status
-        this.$store.commit('updateProjectStatus', status)
+        this.$store.commit('updateWorkStatus', status)
         if (response.data.isProjectDone) this.updateProject()
       } catch (error) {
         console.error("Lỗi khi tạo công việc: ", error);
@@ -371,6 +371,7 @@ export default {
           project_id: this.receivedProjectID,
           status: 2
         });
+        this.$store.commit('updateProjectStatus', 2)
       } catch (e) {
         console.error(e)
       }

@@ -53,7 +53,7 @@ class ProjectService {
     
             return $data;
         } catch (\Exception $e) {
-            throw new Exception("ERROR: " . $e->getMessage());
+            throw new \Exception("ERROR: " . $e->getMessage());
         }
     }
 

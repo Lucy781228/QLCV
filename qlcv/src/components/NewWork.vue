@@ -2,6 +2,7 @@
     <div class="new-work">
         <div class="title">
             <h2>THÊM CÔNG VIỆC</h2>
+            <div class="error">Lưu ý: Chỉ có thể thay đổi danh sách tác vụ với công việc cần làm.</div>
         </div>
         <div class="grid-view-a">
             <div class="grid-item grid-view-b">
@@ -56,7 +57,10 @@
                             v-if="touchedFields.end_date && !validation.requiredObject(work.end_date)">
                             {{ validationMessages['required'] }}
                         </span>
-                        <span class="validation-error" v-if="!isValidDate">
+                        <span class="validation-error" v-if="!isValidEndDate">
+                            Ngày kết thúc phải sau ngày hiện tại
+                        </span>
+                        <span class="validation-error" v-else-if="!isValidDate">
                             Ngày kết thúc phải sau ngày bắt đầu
                         </span>
                     </div>
@@ -124,6 +128,7 @@ export default {
     data() {
         return {
             isValidDate: true,
+            isValidEndDate: true,
             project: null,
             touchedFields: {
                 work_name: false,
@@ -157,15 +162,20 @@ export default {
     watch: {
         work: {
             handler: function (newVal, oldVal) {
-                this.isValidDate = this.validateDates();
+                this.isValidDate = this.validateDates()
+                this.isValidEndDate = this.validateEndDate()
             },
             deep: true
         }
     },
 
     computed: {
+        sharedProjectStatus() {
+            return this.$store.state.sharedProjectStatus;
+        },
+
         isFormValid() {
-            return this.isValidDate &&
+            return this.isValidDate && this.isValidEndDate &&
                 this.validation.requiredObject(this.work.start_date) &&
                 this.validation.requiredObject(this.work.end_date) &&
                 this.validation.requiredObject(this.work.assigned_to) &&
@@ -206,6 +216,14 @@ export default {
             }
             return true;
         },
+
+        validateEndDate() {
+            if (this.work.end_date) {
+                return this.work.end_date > new Date().setHours(0, 0, 0, 0)
+            }
+            return true;
+        },
+
         formatDateToDDMMYYYY(inputDate) {
             if (inputDate) {
                 const parts = inputDate.split('-');
@@ -266,6 +284,7 @@ export default {
 
         async createWork() {
             try {
+                const status = this.work.start_date <= new Date().setHours(0, 0, 0, 0) ? 1 : 0
                 const response = await axios.post(generateUrl('/apps/qlcv/create_work'), {
                     project_id: this.receivedProjectID,
                     work_name: this.work.work_name,
@@ -275,16 +294,32 @@ export default {
                     label: this.work.label.text,
                     assigned_to: this.work.assigned_to.userId,
                     contents: this.tasks,
-                    owner: this.user.uid
+                    owner: this.user.uid,
+                    status: status
                 });
 
-                console.log(response.data)
+                if (status == 1 && this.sharedProjectStatus == 0) this.updateProject()
 
                 showSuccess("Tạo thành công.")
                 this.cancel()
             } catch (error) {
                 console.error("Lỗi khi tạo công việc: ", error);
                 showError("Có lỗi xảy ra khi tạo công việc.");
+            }
+        },
+
+        async updateProject() {
+            try {
+                const response = await axios.put('/apps/qlcv/update_project', {
+                    project_name: null,
+                    description: null,
+                    user_id: null,
+                    project_id: this.receivedProjectID,
+                    status: 1
+                });
+                this.$store.commit('updateProjectStatus', 1)
+            } catch (e) {
+                console.error(e)
             }
         },
 

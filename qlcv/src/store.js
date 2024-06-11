@@ -13,6 +13,7 @@ function loadState() {
         sharedProjectOwner: '',
         sharedProjectID: 0,
         sharedProjectStatus: 0,
+        sharedWorkStatus: 0,
     };
 }
 
@@ -33,6 +34,10 @@ export default new Vuex.Store({
         },
         updateProjectStatus(state, value) {
             state.sharedProjectStatus = value;
+            localStorage.setItem('store', JSON.stringify(state));
+        },
+        updateWorkStatus(state, value) {
+            state.sharedWorkStatus = value;
             localStorage.setItem('store', JSON.stringify(state));
         }
     }

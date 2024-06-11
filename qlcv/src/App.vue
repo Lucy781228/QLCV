@@ -22,7 +22,7 @@
 					<template>
 						<NcAppNavigationItem v-for="(item, index) in todoProjects" :key="`project-${index}`"
 							:title="t('qlcv', item.project_name)"
-							@click="updateStore(item.project_id, item.project_name, item.user_id)"
+							@click="updateStore(item.project_id, item.project_name, item.user_id, item.status)"
 							:to="{ name: 'project', params: { sharedProjectID: item.project_id } }">
 							<template #icon>
 								<NcAppNavigationIconBullet color="0082c9" />
@@ -67,7 +67,7 @@
 					<template>
 						<NcAppNavigationItem v-for="(item, index) in doingProjects" :key="`project-${index}`"
 							:title="t('qlcv', item.project_name)"
-							@click="updateStore(item.project_id, item.project_name, item.user_id)"
+							@click="updateStore(item.project_id, item.project_name, item.user_id, item.status)"
 							:to="{ name: 'project', params: { sharedProjectID: item.project_id } }">
 							<template #icon>
 								<NcAppNavigationIconBullet color="ddcb55" />
@@ -112,7 +112,7 @@
 					<template>
 						<NcAppNavigationItem v-for="(item, index) in doneProjects" :key="`project-${index}`"
 							:title="t('qlcv', item.project_name)"
-							@click="updateStore(item.project_id, item.project_name, item.user_id)"
+							@click="updateStore(item.project_id, item.project_name, item.user_id, item.status)"
 							:to="{ name: 'project', params: { sharedProjectID: item.project_id } }">
 							<template #icon>
 								<NcAppNavigationIconBullet color="4ce046" />
@@ -270,19 +270,17 @@ export default {
 			this.$store.commit('updateValue', itemName);
 		},
 
-		updateStore(id, name, user_id) {
+		updateStore(id, name, user_id, status) {
 			this.$store.commit('updateProject', id)
 			this.$store.commit('updateTitle', name)
 			this.$store.commit('updateProjectOwner', user_id)
+			this.$store.commit('updateProjectStatus', status)
 		},
 
 		async getProjects() {
 			try {
-				const response = await axios.get(generateUrl(`/apps/qlcv/projects/${this.user.uid}`))
+				const response = await axios.get(generateUrl('/apps/qlcv/projects'))
 				const projects = response.data.projects;
-
-				console.log(projects)
-
 				this.todoProjects = projects.filter(project => project.status === 0);
 				this.doingProjects = projects.filter(project => project.status === 1);
 				this.doneProjects = projects.filter(project => project.status === 2);

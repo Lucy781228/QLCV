@@ -3,7 +3,7 @@
         <div class="work-header">
             <div class="work-name">{{ workName }}</div>
             <div class="work-end-date">
-                <CalendarBlankOutline v-if="endDate" :size="16" />{{ endDate }}
+                <CalendarBlankOutline v-if="endDate" :size="16" />{{ formatDate(endDate) }}
             </div>
         </div>
         <div class="work_body">
@@ -24,16 +24,10 @@
                                 <Delete :size="16" />Xóa
                             </template>
                         </NcActionButton>
-                        <NcActionButton type="tertiary" @click.stop.prevent="updateStatus" v-if="status == 2"
+                        <NcActionButton type="tertiary" @click.stop.prevent="updateStatus" v-if="status == 1"
                             :closeAfterClick="true">
                             <template #icon>
-                                <Check :size="16" />Phê duyệt
-                            </template>
-                        </NcActionButton>
-                        <NcActionButton type="tertiary" @click.stop.prevent="updateWork" v-if="status == 2"
-                            :closeAfterClick="true">
-                            <template #icon>
-                                <Close :size="16" />Từ chối
+                                <Check :size="16" />Đánh dấu đã hoàn thành
                             </template>
                         </NcActionButton>
                     </NcActions>
@@ -117,6 +111,11 @@ export default {
     },
 
     methods: {
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return ` ${day}-${month}-${year}`;
+        },
         textStyle(text) {
             const styles = {
                 'Cao': {

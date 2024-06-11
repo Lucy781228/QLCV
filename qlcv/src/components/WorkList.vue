@@ -2,7 +2,7 @@
     <div v-if="showEmpty">
         <NcLoadingIcon />
     </div>
-    <div v-else-if="!works.length && isChildRoute" >
+    <div v-else-if="!works.length && isChildRoute">
         <NcEmptyContent>
             <template #title>
                 <h1 class="empty-content__title">
@@ -10,7 +10,8 @@
                 </h1>
             </template>
             <template #action>
-                <NcButton ariaLabel="A" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID} }" type="primary">
+                <NcButton ariaLabel="A" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID } }"
+                    type="primary">
                     Thêm công việc
                 </NcButton>
             </template>
@@ -32,15 +33,15 @@
                             <ChartGantt :size="20" />
                         </template>
                     </NcButton>
-                    <NcButton type="tertiary" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID} }"
-                     aria-label="Example text" v-if="isProjectOwner">
+                    <NcButton type="tertiary" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID } }"
+                        aria-label="Example text" v-if="isProjectOwner">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
                     </NcButton>
                 </div>
             </div>
-            <div class="second-header" v-if="projectStatus==1">
+            <div class="second-header" v-if="sharedProjectStatus == 1">
                 <div class="grid-column-header" v-for="status in [0, 1, 2, 3]" :key="status">
                     <h4>{{ columnHeaders[status] }}</h4>
                 </div>
@@ -51,13 +52,14 @@
                 <router-link
                     :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }"
                     class="work-item" v-for="work in filteredWorksByStatus(status)" :key="work.work_id">
-                    <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to" :status="work.status"
-                        :work-id="work.work_id" @delete="showModal" :end-date="work.end_date" :is-project-owner="isProjectOwner" @update="getWorks"/>
+                    <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
+                        :status="work.status" :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
+                        :is-project-owner="isProjectOwner" @update="getWorks" />
                 </router-link>
             </div>
         </div>
         <router-view @back-to-worklist="getWorks" />
-        
+
         <NcModal :show="isDelete" :canClose="false" size="small">
             <div class="modal__content">
                 <h3>Bạn chắc chắn không?</h3>
@@ -118,35 +120,37 @@ export default {
             isDelete: false,
             workId: 0,
             showEmpty: true,
-            projectStatus: null
         };
     },
 
     computed: {
+        sharedProjectStatus() {
+            return this.$store.state.sharedProjectStatus;
+        },
         receivedProjectID() {
-            return this.$store.state.sharedProjectID;
+            return this.$store.state.sharedProjectID
         },
 
         receivedTitle() {
-            return this.$store.state.sharedTitle;
+            return this.$store.state.sharedTitle
         },
 
         receivedUserID() {
-            return this.$store.state.sharedProjectOwner;
+            return this.$store.state.sharedProjectOwner
         },
         isChildRoute() {
-            return this.$route.name !== 'project-gantt' && this.$route.name !== 'new-work';
+            return this.$route.name !== 'project-gantt' && this.$route.name !== 'new-work'
         },
         isProjectOwner() {
-            return this.user.uid==this.receivedUserID;
+            return this.user.uid == this.receivedUserID
         },
         completedWorksCount() {
-      return this.works.filter(work => work.status === 3).length
-    },
+            return this.works.filter(work => work.status === 3).length
+        },
     },
 
     mounted() {
-        
+
     },
 
     watch: {
@@ -154,7 +158,6 @@ export default {
             immediate: true,
             handler(newVal) {
                 if (newVal && this.receivedProjectID) {
-                    this.getProject()
                     this.getWorks();
                 }
             }
@@ -204,16 +207,6 @@ export default {
             try {
                 const response = await axios.get(generateUrl(`/apps/qlcv/work_by_id/${id}`));
                 this.work = response.data.work
-
-            } catch (e) {
-                console.error(e)
-            }
-        },
-
-        async getProject(id) {
-            try {
-                const response = await axios.get(generateUrl(`/apps/qlcv/project/${this.receivedProjectID}`));
-                this.projectStatus = response.data.project.status
 
             } catch (e) {
                 console.error(e)

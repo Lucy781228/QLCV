@@ -1,7 +1,7 @@
 <template>
   <div class="files">
     <div class="grid-container" :style="{ 'grid-template-columns': gridContainerStyle }">
-      <div class="grid-item upload" v-if="sharedProjectStatus == 1 || isOwner">
+      <div class="grid-item upload" v-if="sharedWorkStatus == 1 || isOwner">
         <TrayArrowUp :size="70" />
         <NcButton :wide="true" type="primary" @click="triggerFileInput">Tải lên</NcButton>
         <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
@@ -86,7 +86,12 @@ export default {
   },
 
   async mounted() {
-    this.shareFolder();
+    if (this.sharedWorkStatus == 1) {
+      await this.shareFolder()
+      await this.addCreatePermission()
+    }
+    else if (this.sharedWorkStatus != 0) await this.setReadPermission()
+
     this.getFiles();
     this.assignedName = await this.getFullName(this.assignedTo);
     this.ownerName = await this.getFullName(this.owner);
@@ -95,16 +100,14 @@ export default {
 
   computed: {
     gridContainerStyle() {
-      if (this.sharedProjectStatus == 1 || this.isOwner) {
-        this.addCreatePermission()
+      if (this.sharedWorkStatus == 1 || this.isOwner) {
         return '2fr 4fr'
       }
-      this.setReadPermission()
       return '1fr'
     },
 
-    sharedProjectStatus() {
-      return this.$store.state.sharedProjectStatus;
+    sharedWorkStatus() {
+      return this.$store.state.sharedWorkStatus;
     }
   },
 

@@ -9,7 +9,7 @@
                 </div>
                 <div class="grid-item">
                     <label>Mô tả</label>
-                    <textarea class="description" type="text" v-model="description"> </textarea>
+                    <textarea class="description" type="text" v-model="description" :disabled="true"> </textarea>
                 </div>
             </div>
 
@@ -173,7 +173,6 @@ export default {
                 const currentDate = new Date();
                 const response = await axios.post('/apps/qlcv/create_project', {
                     project_name: this.projectName,
-                    user_id: this.user.uid,
                     status: this.startDate <= currentDate ? 1 : 0,
                     description: this.description
                 });
@@ -188,7 +187,6 @@ export default {
             try {
                 const response = await axios.put('/apps/qlcv/update_project', {
                     project_name: this.projectName,
-                    user_id: this.user.uid,
                     project_id: this.projectId,
                     status: null,
                     description: this.description

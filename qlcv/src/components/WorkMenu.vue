@@ -100,9 +100,7 @@ export default {
             try {
                 const response = await axios.get(generateUrl(`/apps/qlcv/work_by_id/${this.workId}`));
                 this.work = response.data.work
-                this.$store.commit('updateProjectStatus', this.work.status)
-
-
+                this.$store.commit('updateWorkStatus', this.work.status)
             } catch (e) {
                 console.error(e)
             }

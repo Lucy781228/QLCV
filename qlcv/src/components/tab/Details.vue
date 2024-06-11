@@ -1,17 +1,20 @@
 <template>
     <div class="details">
-            <div class="combo-action">
-            <NcButton type="tertiary" @click="startEditting" v-if="isOwner && !isEdit && status != 2 && status != 3" aria-label="Example text">
+        <div class="combo-action">
+            <NcButton type="tertiary" @click="startEditting" v-if="isOwner && !isEdit && status != 2 && status != 3"
+                aria-label="Example text">
                 <template #icon>
                     <Pencil :size="20" />
                 </template>
             </NcButton>
-            <NcButton type="tertiary" @click="cancelEditting" v-if="isOwner && isEdit && status != 2 && status != 3" aria-label="Example text">
+            <NcButton type="tertiary" @click="cancelEditting" v-if="isOwner && isEdit && status != 2 && status != 3"
+                aria-label="Example text">
                 <template #icon>
                     <Close :size="20" />
                 </template>
             </NcButton>
-            <NcButton type="primary" @click="updateWork" v-if="isOwner && isEdit && status != 2 && status != 3" aria-label="Example text">
+            <NcButton type="primary" @click="updateWork" v-if="isOwner && isEdit && status != 2 && status != 3"
+                :disabled="!isFormValid" aria-label="Example text">
                 <template #icon>
                     <Check :size="20" />
                 </template>
@@ -30,16 +33,17 @@
             </div>
             <div class="grid-item">
                 <label>Nhãn</label>
-                <NcMultiselect v-if="isEdit && isOwner" ref="label" class="nc-select" v-model="selectedLabel" :options="labels"
-                    label="text" track-by="text" />
+                <NcMultiselect v-if="isEdit && isOwner" ref="label" class="nc-select" v-model="selectedLabel"
+                    :options="labels" label="text" track-by="text" />
                 <input v-else type="text" v-model="initialWork.label" class="input-disabled" :disabled="true" />
                 <div class="validation-error-container">
                 </div>
             </div>
             <div class="grid-item">
                 <label>Người nhận việc (*)</label>
-                <NcMultiselect v-if="isEdit && status == 0 && isOwner" class="nc-select" v-model="selectedUser" :options="formatUsers"
-                    placeholder="Chọn một tùy chọn" label="userId" track-by="userId" :user-select="true">
+                <NcMultiselect v-if="isEdit && status == 0 && isOwner" class="nc-select" v-model="selectedUser"
+                    :options="formatUsers" placeholder="Chọn một tùy chọn" label="userId" track-by="userId"
+                    :user-select="true">
                     <template #singleLabel="{ option }">
                         <NcListItemIcon v-bind="option" :title="option.userId" :avatar-size="24" :no-margin="true" />
                     </template>
@@ -48,11 +52,11 @@
             </div>
             <div class="grid-item">
                 <label>Ngày bắt đầu (*)</label>
-                <NcDatetimePicker v-if="isEdit && status == 0 && isOwner" ref="start_date" format="DD/MM/YYYY" class="nc-picker"
-                    v-model="startDate" />
+                <NcDatetimePicker v-if="isEdit && status == 0 && isOwner" ref="start_date" format="DD/MM/YYYY"
+                    class="nc-picker" v-model="startDate" />
                 <input v-else type="text" v-model="getStartDate" class="input-disabled" :disabled="true" />
                 <div class="validation-error-container">
-                    <span class="validation-error" v-if="!validation.requiredString(work.work_name)">
+                    <span class="validation-error" v-if="!validation.requiredObject(startDate)">
                         {{ validationMessages['required'] }}
                     </span>
                 </div>
@@ -63,14 +67,21 @@
                     v-model="endDate" />
                 <input v-else type="text" v-model="getEndDate" class="input-disabled" :disabled="true" />
                 <div class="validation-error-container">
-                    <span class="validation-error" v-if="!validation.requiredString(work.work_name)">
+                    <span class="validation-error" v-if="!validation.requiredObject(endDate)">
                         {{ validationMessages['required'] }}
+                    </span>
+                    <span class="validation-error" v-if="!isValidEndDate">
+                        Ngày kết thúc phải sau ngày hiện tại
+                    </span>
+                    <span class="validation-error" v-else-if="!isValidDate">
+                        Ngày kết thúc phải sau ngày bắt đầu
                     </span>
                 </div>
             </div>
             <div class="grid-item full-width">
                 <label>Mô tả</label>
-                <textarea v-if="isEdit && isOwner" class="description" type="text" v-model="work.description"> </textarea>
+                <textarea v-if="isEdit && isOwner" class="description" type="text"
+                    v-model="work.description"> </textarea>
                 <textarea v-else class="description input-disabled" type="text" v-model="initialWork.description"
                     :disabled="true"> </textarea>
             </div>
@@ -170,6 +181,27 @@ export default {
         validation() {
             return validation;
         },
+
+        isValidDate() {
+            if (this.startDate && this.endDate) {
+                return this.startDate < this.endDate;
+            }
+            return true;
+        },
+
+        isValidEndDate() {
+            if (this.endDate) {
+                return this.endDate > new Date().setHours(0, 0, 0, 0)
+            }
+            return true;
+        },
+
+        isFormValid() {
+            return this.isValidDate && this.isValidEndDate &&
+                this.validation.requiredObject(this.startDate) &&
+                this.validation.requiredObject(this.endDate) &&
+                this.validation.requiredString(this.work.work_name)
+        },
     },
 
     mounted() {
@@ -230,11 +262,11 @@ export default {
         async updateWork() {
             try {
                 const response = await axios.put('/apps/qlcv/update_work', {
-                    work_name: this.work.work_name,
-                    description: this.work.description,
-                    start_date: this.mysqlDateFormatter(this.startDate),
-                    end_date: this.mysqlDateFormatter(this.endDate),
-                    label: this.selectedLabel.text,
+                    work_name: this.initialWork.work_name  === this.work.work_name ? null : this.work.work_name,
+                    description: this.initialWork.description  === this.work.description ? null : this.work.description,
+                    start_date: this.initialWork.start_date  === this.mysqlDateFormatter(this.startDate) ? null : this.mysqlDateFormatter(this.startDate),
+                    end_date: this.initialWork.end_date  === this.mysqlDateFormatter(this.endDate) ? null : this.mysqlDateFormatter(this.endDate),
+                    label: this.selectedLabel && (this.initialWork.label !== this.selectedLabel.text) ? this.selectedLabel.text : null,
                     assigned_to: this.selectedUser.userId,
                     status: null,
                     work_id: this.work.work_id,
