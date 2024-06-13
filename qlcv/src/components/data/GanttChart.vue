@@ -16,6 +16,19 @@ export default {
     }
   },
 
+  watch: {
+    tasks: {
+      deep: true,
+      handler(newVal) {
+        if (newVal && newVal.data) {
+          gantt.clearAll();
+          gantt.parse(newVal);
+          this.addTodayMarker()
+        }
+      }
+    }
+  },
+
   mounted() {
     gantt.plugins({
       marker: true
@@ -48,27 +61,22 @@ export default {
 
     gantt.init(this.$refs.gantt)
     gantt.parse(this.$props.tasks)
+    this.addTodayMarker();
+  },
 
-    this.$nextTick(() => {
-    const tasks = gantt.getTaskByTime();
-    if (tasks.length >= 3) {
-      // Lấy ID của task thứ ba
-      const thirdTaskId = tasks[2].id;
-      // Sử dụng ID này để chọn task
-      gantt.selectTask(thirdTaskId);
-      // Cuộn đến task này nếu cần
-      gantt.showTask(thirdTaskId);
-    }
-  });
-
-    var currentDate = new Date().setHours(0, 0, 0, 0)
-
-    var todayMarker = gantt.addMarker({
-      start_date: currentDate,
-      css: "today",
-      text: "Today"
-    });
-  }
+  methods: {
+    addTodayMarker() {
+        var currentDate = new Date().setHours(0, 0, 0, 0);
+        var todayMarker = gantt.addMarker({
+            start_date: currentDate,
+            css: "today",
+            text: "Ngày hiện tại",
+            title: "Ngày hiện tại"
+        });
+        gantt.showDate(currentDate);
+        gantt.render()
+    },
+}
 }
 </script>
 
@@ -105,6 +113,10 @@ export default {
 }
 
 .gantt_tree_icon {
-    display: none !important;
+  display: none !important;
+}
+
+.gantt_marker {
+  z-index: 100 !important;
 }
 </style>

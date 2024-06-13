@@ -77,7 +77,7 @@ export default {
                         {
                             label: 'Tổng công việc',
                             data: [],
-                            borderColor: '#006AA3',
+                            borderColor: '#000',
                             borderWidth: 1,
                             data: [],
                             lineTension: 0,
@@ -87,38 +87,38 @@ export default {
                         },
                         {
                             label: 'Cần làm',
-                            backgroundColor: '#f87979',
+                            backgroundColor: '#006AA3',
                             data: [],
                             // maxBarThickness: 8,
                             barPercentage: 0.8,
-                            barThickness: 50,
+                            barThickness: 30,
                             categoryPercentage: 0.5,
                         },
                         {
                             label: 'Đang tiến hành',
-                            backgroundColor: '#4b77a9',
+                            backgroundColor: '#66B2E0',
                             data: [],
                             // maxBarThickness: 8,
                             barPercentage: 0.8,
-                            barThickness: 50,
+                            barThickness: 30,
                             categoryPercentage: 0.5,
                         },
                         {
                             label: 'Chờ duyệt',
-                            backgroundColor: '#f87979',
+                            backgroundColor: '#3399CC',
                             data: [],
                             // maxBarThickness: 8,
                             barPercentage: 0.8,
-                            barThickness: 50,
+                            barThickness: 30,
                             categoryPercentage: 0.5,
                         },
                         {
                             label: 'Hoàn thành',
-                            backgroundColor: '#4b77a9',
+                            backgroundColor: '#99D6EA',
                             data: [],
                             // maxBarThickness: 8,
                             barPercentage: 0.8,
-                            barThickness: 50,
+                            barThickness: 30,
                             categoryPercentage: 0.5,
                         },
                     ]
@@ -271,7 +271,7 @@ export default {
                     startDate: this.startDate,
                     endDate: this.endDate
                 };
-                const response = await axios.get(generateUrl(`/apps/qlcv/data/count_works/${this.user.uid}`, { params }));
+                const response = await axios.get(generateUrl('/apps/qlcv/data/count_works', { params }));
 
                 const workCounts = response.data.data;
                 const filteredWorkCounts = workCounts.filter(item => item.all_works > 0);

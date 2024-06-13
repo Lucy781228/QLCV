@@ -77,4 +77,55 @@ class TaskService {
             throw new Exception("ERROR: " . $e->getMessage());
         }
     }
+
+    public function getTaskById($task_id) {
+        try {
+            $query = $this->db->getQueryBuilder();
+            $query->select("*")
+                  ->from("qlcv_task")
+                  ->where(
+                      $query->expr()->eq("task_id", $query->createNamedParameter($task_id))
+                  );
+    
+            $result = $query->execute();
+            $data = $result->fetch();
+    
+            return $data;
+        } catch (\Exception $e) {
+            throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function countTaskPerWorks($work_id) {
+        try {
+            $query = $this->db->getQueryBuilder();
+            $query->select($query->func()->count('*', 'task_count'))
+                  ->from('qlcv_task')
+                  ->where($query->expr()->eq('work_id', $query->createNamedParameter($work_id)));
+    
+            $result = $query->execute();
+            $data = $result->fetch();
+    
+            return isset($data['task_count']) ? (int) $data['task_count'] : 0;
+        } catch (Exception $e) {
+            throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function countUndoneTaskPerWorks($work_id) {
+        try {
+            $query = $this->db->getQueryBuilder();
+            $query->select($query->func()->count('*', 'task_count'))
+                  ->from('qlcv_task')
+                  ->where($query->expr()->eq('work_id', $query->createNamedParameter($work_id)))
+                  ->andWhere($query->expr()->eq('is_done', $query->createNamedParameter(0)));
+    
+            $result = $query->execute();
+            $data = $result->fetch();
+    
+            return isset($data['task_count']) ? (int) $data['task_count'] : 0;
+        } catch (Exception $e) {
+            throw new Exception("ERROR: " . $e->getMessage());
+        }
+    }
 }

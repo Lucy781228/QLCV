@@ -13,7 +13,7 @@ import NewWork from './components/NewWork.vue'
 import VueRouter from 'vue-router'
 import store from './store'
 import DataMenu from './components/data/DataMenu.vue'
-import Test from './components/data/Test.vue'
+import GanttView from './components/data/GanttView.vue'
 import WorkMenu from './components/WorkMenu.vue'
 import UpcomingWorkList from './components/UpcomingWorkList.vue'
 
@@ -38,6 +38,7 @@ const router = new VueRouter({
 	base: generateUrl('/apps/qlcv'),
 	routes: [
 		{
+			name: 'upcoming',
 			path: '/',
 			component: UpcomingWorkList,
 		},
@@ -49,7 +50,7 @@ const router = new VueRouter({
 				{
 					name: 'project-gantt',
 					path: 'gantt',
-					component: Test,
+					component: GanttView,
 				},
 				{
 					name: 'work',

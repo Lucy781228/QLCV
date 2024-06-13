@@ -23,7 +23,9 @@ return [
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
 
         // Data
-        ['name' => 'Data#countWorksPerProject', 'url' => '/data/count_works/{userId}', 'verb' => 'GET'],
+        ['name' => 'Data#countWorksPerProject', 'url' => '/data/count_works', 'verb' => 'GET'],
+        ['name' => 'Data#predictWorksCompletionTimes', 'url' => '/data/predict_work/{project_id}', 'verb' => 'GET'],
+        ['name' => 'Data#simplePredict', 'url' => '/data/simple_predict/{work_id}', 'verb' => 'GET'],
 
         //User
         ['name' => 'User#getUsers', 'url' => '/users', 'verb' => 'GET'],
@@ -52,6 +54,7 @@ return [
         ['name' => 'Work#getWorkById', 'url' => '/work_by_id/{work_id}', 'verb' => 'GET'],
         ['name' => 'Work#updateWork', 'url' => '/update_work', 'verb' => 'PUT'],
         ['name' => 'Work#deleteWork', 'url' => '/delete_work/{work_id}', 'verb' => 'DELETE'],
+        ['name' => 'Work#getUpcomingWorks', 'url' => '/upcoming_works', 'verb' => 'GET'],
 
         // Comment
         ['name' => 'Comment#createComment', 'url' => '/create_comment', 'verb' => 'POST'],

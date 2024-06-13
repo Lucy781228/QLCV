@@ -3,126 +3,148 @@ declare(strict_types=1);
 
 namespace OCA\QLCV\Service;
 
-use OCP\IDBConnection;
 use Exception;
-
+use OCA\QLCV\Service\WorkService;
 class PredictionService {
-    private $db;
-    private $projectAnalystService;
-    private $beta0;
-    private $beta1;
+    private $workService;
 
-    public function __construct(IDBConnection $db, ProjectAnalystService $projectAnalystService) {
-        $this->db = $db;
-        $this->projectAnalystService = $projectAnalystService;
+    public function __construct(WorkService $workService) {
+        $this->workService = $workService;
     }
 
-    private function calculateRegressionCoefficients($project_id) {
-        try {
-            $data = $this->getHistoricalData($project_id);
-
-            // Tính toán các giá trị trung bình
-            $n = count($data);
-            $sumX = 0;
-            $sumY = 0;
-            $sumXY = 0;
-            $sumX2 = 0;
-
-            foreach ($data as $row) {
-                $x = $row['task_count'];
-                $y = $row['duration'];
-                $sumX += $x;
-                $sumY += $y;
-                $sumXY += $x * $y;
-                $sumX2 += $x * $x;
-            }
-
-            $meanX = $sumX / $n;
-            $meanY = $sumY / $n;
-
-            // Tính toán các hệ số hồi quy
-            $this->beta1 = ($sumXY - $n * $meanX * $meanY) / ($sumX2 - $n * $meanX * $meanX);
-            $this->beta0 = $meanY - $this->beta1 * $meanX;
-        } catch (Exception $e) {
-            throw new Exception("ERROR: " . $e->getMessage());
+    private function trainMultipleLinearRegressionModel($project_id) {
+        $data = $this->workService->getSampleData($project_id);
+        if (count($data) < 3) {
+            throw new \Exception("Insufficient data for training the model. At least 3 rows of data are required.");
         }
+        $X = [];
+        $y = [];
+        foreach ($data as $row) {
+            $X[] = [1, $row['num_tasks'], $row['priority']]; // Thêm 1 cho hệ số chặn (intercept)
+            $y[] = $row['duration'];
+        }
+
+        // Chuyển đổi mảng thành ma trận
+        $X = $this->arrayToMatrix($X);
+        $y = $this->arrayToMatrix($y, true);
+
+        // Tính toán hệ số hồi quy tuyến tính đa biến
+        $X_transpose = $this->transposeMatrix($X);
+        $X_transpose_X = $this->multiplyMatrices($X_transpose, $X);
+        $X_transpose_y = $this->multiplyMatrices($X_transpose, $y);
+        $coefficients = $this->solveLinearSystem($X_transpose_X, $X_transpose_y);
+
+        return $coefficients;
     }
 
-    public function predictCompletionTime($project_id) {
-        try {
-            $this->calculateRegressionCoefficients($project_id);
-
-            $query = $this->db->getQueryBuilder();
-            $query->select("work_id")
-                  ->from("qlcv_work")
-                  ->where($query->expr()->eq("project_id", $query->createNamedParameter($project_id)))
-                  ->andWhere($query->expr()->eq("status", $query->createNamedParameter(1)));
-
-            $result = $query->execute();
-            $workIds = $result->fetchAll();
-
-            $predictions = [];
-            foreach ($workIds as $row) {
-                $work_id = $row['work_id'];
-                $taskCount = $this->countTaskPerWork($work_id, 0);
-                $predictedDuration = $this->beta0 + $this->beta1 * $taskCount;
-                $predictions[] = [
-                    'work_id' => $work_id,
-                    'predicted_duration' => $predictedDuration
-                ];
+    // Hàm để chuyển đổi mảng thành ma trận
+    private function arrayToMatrix(array $array, bool $isColumnVector = false) {
+        $matrix = [];
+        if ($isColumnVector) {
+            foreach ($array as $value) {
+                $matrix[] = [$value];
             }
+        } else {
+            $matrix = $array;
+        }
+        return $matrix;
+    }
 
+    // Hàm để chuyển vị ma trận
+    private function transposeMatrix(array $matrix) {
+        return array_map(null, ...$matrix);
+    }
+
+    // Hàm để nhân hai ma trận
+    private function multiplyMatrices(array $matrixA, array $matrixB) {
+        $result = [];
+        for ($i = 0; $i < count($matrixA); $i++) {
+            for ($j = 0; $j < count($matrixB[0]); $j++) {
+                $result[$i][$j] = 0;
+                for ($k = 0; $k < count($matrixB); $k++) {
+                    $result[$i][$j] += $matrixA[$i][$k] * $matrixB[$k][$j];
+                }
+            }
+        }
+        return $result;
+    }
+
+    // Hàm để giải hệ phương trình tuyến tính sử dụng phương pháp Gauss-Jordan
+    private function solveLinearSystem(array $A, array $b) {
+        $n = count($A);
+        for ($i = 0; $i < $n; $i++) {
+            $A[$i][] = $b[$i][0];
+        }
+
+        for ($i = 0; $i < $n; $i++) {
+            $max = $i;
+            for ($j = $i + 1; $j < $n; $j++) {
+                if (abs($A[$j][$i]) > abs($A[$max][$i])) {
+                    $max = $j;
+                }
+            }
+            $temp = $A[$i];
+            $A[$i] = $A[$max];
+            $A[$max] = $temp;
+
+            $temp = $b[$i][0];
+            $b[$i][0] = $b[$max][0];
+            $b[$max][0] = $temp;
+
+            for ($j = $i + 1; $j < $n; $j++) {
+                $factor = $A[$j][$i] / $A[$i][$i];
+                for ($k = $i; $k <= $n; $k++) {
+                    $A[$j][$k] -= $factor * $A[$i][$k];
+                }
+            }
+        }
+
+        $x = array_fill(0, $n, 0);
+        for ($i = $n - 1; $i >= 0; $i--) {
+            $sum = 0;
+            for ($j = $i + 1; $j < $n; $j++) {
+                $sum += $A[$i][$j] * $x[$j];
+            }
+            $x[$i] = ($A[$i][$n] - $sum) / $A[$i][$i];
+        }
+
+        return $x;
+    }
+
+    public function predictWorksCompletionTimes($project_id) {
+        try {
+            $worksData = $this->workService->getNeededPredictionWork($project_id);
+            $predictions = [];
+            
+            $coefficients = $this->trainMultipleLinearRegressionModel($project_id);
+            
+            foreach ($worksData as $work) {
+                $predictedDuration = $coefficients[0] + $coefficients[1] * $work['num_tasks'] + $coefficients[2] * $work['priority'];
+                $work['predicted_duration'] = round($predictedDuration, 2);
+                $predictions[] = $work;
+            }
+            
             return $predictions;
         } catch (Exception $e) {
             throw new Exception("ERROR: " . $e->getMessage());
         }
     }
 
-    private function countTaskPerWork($work_id, $is_done) {
+    public function simplePredict($work_id) {
         try {
-            $query = $this->db->getQueryBuilder();
-            $query->select($query->func()->count('*', 'task_count'))
-                  ->from("qlcv_task")
-                  ->where($query->expr()->eq("work_id", $query->createNamedParameter($work_id)))
-                  ->andWhere($query->expr()->eq("is_done", $query->createNamedParameter($is_done)));
+            $work = $this->workService->getWorkById($work_id);  
+            $durationInSeconds = (int)$work['end_date'] - (int)$work['start_date'];
+            $totalTasks = $this->workService->countTaskPerWorks($work_id);
+            $undoneTasks = $this->workService->countUndoneTaskPerWorks($work_id);
     
-            $result = $query->execute();
-            $taskCount = $result->fetchColumn();
-    
-            return $taskCount;
-        } catch (Exception $e) {
-            throw new Exception("ERROR: " . $e->getMessage());
-        }
-    }
-
-    private function getHistoricalData($project_id) {
-        try {
-            $query = $this->db->getQueryBuilder();
-            $query->select("duration", "work_id")
-                  ->from("qlcv_work")
-                  ->where($query->expr()->eq("project_id", $query->createNamedParameter($project_id)))
-                  ->andWhere($query->expr()->eq("status", $query->createNamedParameter(3)));
-
-            $result = $query->execute();
-            $data = $result->fetchAll();
-
-            $historicalData = [];
-
-            foreach ($data as $row) {
-                $work_id = $row['work_id'];
-                $duration = $row['duration'];
-                $taskCount = $this->countTaskPerWork($work_id, 1);
-
-                $historicalData[] = [
-                    'work_id' => $work_id,
-                    'duration' => $duration,
-                    'task_count' => $taskCount
-                ];
+            $predictedCompletionTime = 0;
+            if ($totalTasks > 0 && $undoneTasks > 0) {
+                $predictedCompletionTime = ($durationInSeconds / $totalTasks) * $undoneTasks;
             }
-
-            return $historicalData;
-        } catch (Exception $e) {
-            throw new Exception("ERROR: " . $e->getMessage());
+            
+            return round($predictedCompletionTime, 2);
+        } catch (\Exception $e) {
+            throw new \Exception("ERROR: " . $e->getMessage());
         }
     }
 }

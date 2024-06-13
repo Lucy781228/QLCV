@@ -105,6 +105,21 @@ class WorkController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
+    public function getUpcomingWorks()
+    {
+        $currentUser = $this->userSession->getUser();
+        if (!$currentUser) {
+            return new JSONResponse(["error" => "User not authenticated"], 403);
+        }
+
+        $data = $this->workService->getUpcomingWorks($currentUser->getUID());
+        return new JSONResponse(["works" => $data]);
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
     public function getWorkById($work_id)
     {
         try {
@@ -132,10 +147,15 @@ class WorkController extends Controller
         $label,
         $assigned_to,
         $status,
+        $is_returned,
+        $actual_end_date,
         $project_id
     ) {
         try {
-            $this->authorizationService->isWorkOwner($work_id);
+            if ($work_name === null && $description === null && $start_date === null && $is_returned === null
+            && $end_date === null && $label === null && $assigned_to === null && $actual_end_date === null)
+            $this->authorizationService->hasAccessWork($work_id);
+            else $this->authorizationService->isWorkOwner($work_id);
             $result = $this->workService->updateWork(
                 $work_id,
                 $work_name,
@@ -145,6 +165,8 @@ class WorkController extends Controller
                 $label,
                 $assigned_to,
                 $status,
+                $is_returned,
+                $actual_end_date,
                 $project_id
             );
             if ($work_name !== null) {

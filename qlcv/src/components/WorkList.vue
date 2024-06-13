@@ -33,8 +33,15 @@
                             <ChartGantt :size="20" />
                         </template>
                     </NcButton>
-                    <NcButton type="tertiary" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID } }"
+                    <NcButton type="tertiary"
+                        :to="{ name: 'project-gantt', params: { sharedProjectID: receivedProjectID } }"
                         aria-label="Example text" v-if="isProjectOwner">
+                        <template #icon>
+                            <Poll :size="20" />
+                        </template>
+                    </NcButton>
+                    <NcButton type="tertiary" :to="{ name: 'new-work', params: { sharedProjectID: receivedProjectID } }"
+                        aria-label="Example text" v-if="isProjectOwner && sharedProjectStatus != 2">
                         <template #icon>
                             <Plus :size="20" />
                         </template>
@@ -47,16 +54,25 @@
                 </div>
             </div>
         </div>
-        <div class="grid-row">
+        <div class="grid-row" v-if="sharedProjectStatus == 1">
             <div class="grid-column" v-for="status in [0, 1, 2, 3]" :key="status">
                 <router-link
                     :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }"
                     class="work-item" v-for="work in filteredWorksByStatus(status)" :key="work.work_id">
                     <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
                         :status="work.status" :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
-                        :is-project-owner="isProjectOwner" @update="getWorks" />
+                        :is-project-owner="isProjectOwner" @update="getWorks" :is-canceled="!work.actual_end_date && work.status == 3"/>
                 </router-link>
             </div>
+        </div>
+        <div class="grid-row" v-else>
+            <router-link v-for="work in works" :key="work.work_id"
+                :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }"
+                class="work-item">
+                <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
+                    :status="work.status" :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
+                    :is-project-owner="isProjectOwner" @update="getWorks" :is-canceled="!work.actual_end_date && work.status == 3"/>
+            </router-link>
         </div>
         <router-view @back-to-worklist="getWorks" />
 
@@ -90,7 +106,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import ChartGantt from 'vue-material-design-icons/ChartGantt.vue'
 import WorkMenu from "./WorkMenu.vue";
-import Test from "./data/Test.vue";
+import Poll from 'vue-material-design-icons/Poll'
 
 
 export default {
@@ -103,9 +119,9 @@ export default {
         NcTextField,
         WorkMenu,
         ChartGantt,
-        Test,
         NcModal,
-        NcEmptyContent
+        NcEmptyContent,
+        Poll
     },
     data() {
         return {
