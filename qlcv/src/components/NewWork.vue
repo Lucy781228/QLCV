@@ -283,7 +283,6 @@ export default {
                     status: status
                 });
                 if (status == 1 && this.sharedProjectStatus == 0) this.updateProject()
-
                 showSuccess("Tạo thành công.")
                 this.cancel()
             } catch (error) {
@@ -301,7 +300,6 @@ export default {
                     project_id: this.receivedProjectID,
                     status: 1
                 });
-                this.$store.commit('updateProjectStatus', 1)
             } catch (e) {
                 console.error(e)
             }

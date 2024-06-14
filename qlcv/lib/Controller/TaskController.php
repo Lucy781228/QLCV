@@ -104,4 +104,40 @@ class TaskController extends Controller
             );
         }
     }
+
+    /**
+ * @NoAdminRequired
+ * @NoCSRFRequired
+ */
+public function countTaskPerWorks($work_id)
+{
+    try {
+        $this->authorizationService->isWorkOwner($work_id);
+        $count = $this->taskService->countTaskPerWorks($work_id);
+        return new JSONResponse(["count" => $count]);
+    } catch (\Exception $e) {
+        return new JSONResponse(
+            ["error" => $e->getMessage()],
+            $e->getCode()
+        );
+    }
+}
+
+/**
+ * @NoAdminRequired
+ * @NoCSRFRequired
+ */
+public function countUndoneTaskPerWorks($work_id)
+{
+    try {
+        $this->authorizationService->isWorkOwner($work_id);
+        $count = $this->taskService->countUndoneTaskPerWorks($work_id);
+        return new JSONResponse(["count" => $count]);
+    } catch (\Exception $e) {
+        return new JSONResponse(
+            ["error" => $e->getMessage()],
+            $e->getCode()
+        );
+    }
+}
 }

@@ -11,10 +11,10 @@
             </div>
         </div>
         <div class="grid-row">
-            <div class="grid-column" v-for="(works, index) in filteredWorks" :key="index">
+            <div class="grid-column" v-for="(works, index) in filteredWorks" :key="index" >
                 <div v-for="work in works" :key="work.work_id" class="work-item">
-                    <router-link
-                        :to="{ name: 'work', params: { sharedProjectID: receivedProjectID, workId: work.work_id } }">
+                    <router-link 
+                        :to="{ name: 'work', params: { sharedProjectID: work.project_id, workId: work.work_id } }">
                         <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
                             :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
                             :is-project-owner="false" />
@@ -22,8 +22,8 @@
                 </div>
             </div>
         </div>
-        <router-view @back-to-worklist="getWorks" />
     </div>
+    <router-view />
 </template>
 
 <script>
@@ -85,10 +85,6 @@ export default {
     },
 
     methods: {
-        clearText() {
-            this.searchQuery = ''
-        },
-
         async getUpcomingWorks() {
             try {
                 const response = await axios.get(generateUrl('/apps/qlcv/upcoming_works'));

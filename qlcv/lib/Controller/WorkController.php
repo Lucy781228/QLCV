@@ -209,6 +209,14 @@ class WorkController extends Controller
                     $result["work_name"]
                 );
             }
+
+            if ($status === 3) {
+                $this->notificationHelper->notifyApprovedWork(
+                    $assigned_to,
+                    $result["project_name"],
+                    $result["work_name"]
+                );
+            }
             return new JSONResponse($result);
         } catch (\Exception $e) {
             return new JSONResponse(

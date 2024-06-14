@@ -3,10 +3,10 @@
         <div class=line-item1>
             <div class="icon-container">
                 <div class="text-container">
-                    <span>Tiến độ từng dự án</span>
+                    <span>Phân loại công việc theo trạng thái</span>
                 </div>
                 <div class="icons">
-                    <NcButton aria-label="Example text" type="tertiary">
+                    <NcButton aria-label="Example text" type="tertiary" @click="downloadStatusChart">
                         <template #icon>
                             <ArrowCollapseDown :size="14" />
                         </template>
@@ -26,7 +26,7 @@
                     <span>Phân loại công việc theo độ ưu tiên</span>
                 </div>
                 <div class="icons">
-                    <NcButton aria-label="Example text" type="tertiary">
+                    <NcButton aria-label="Example text" type="tertiary" @click="downloadPriorityChart">
                         <template #icon>
                             <ArrowCollapseDown :size="14" />
                         </template>
@@ -57,12 +57,12 @@ export default {
     components: { BarChart, GanttChart, NcButton, FilterVariant, ArrowCollapseDown, LineChart },
     props: {
         startDate: {
-            type: String,
+            type: Number,
             required: true
         },
 
         endDate: {
-            type: String,
+            type: Number,
             default: true
         }
     },
@@ -160,46 +160,6 @@ export default {
                         enabled: true,
                     }
                 },
-                lineChartData: {
-                    labels: [],
-                    datasets: [
-                        {
-                            label: 'Số lượng người dùng',
-                            backgroundColor: 'rgba(0, 106, 163, 0.2)', // Màu nền nhạt hơn của #006AA3
-                            borderColor: '#006AA3', // Màu viền là #006AA3
-                            borderWidth: 1,
-                            data: [],
-                            lineTension: 0
-                        }
-                    ]
-                },
-                lineChartOptions: {
-                    maintainAspectRatio: false,
-                    responsive: true,
-                    scales: {
-                        xAxes: [{
-                            gridLines: {
-                                display: false
-                            }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                callback: function (value) {
-                                    if (Number.isInteger(value)) {
-                                        return value;
-                                    }
-                                }
-                            }
-                        }]
-                    },
-                    legend: {
-                        display: false,
-                    },
-                    tooltips: {
-                        enabled: true,
-                    }
-                }
             },
 
             projectPriority: {
@@ -208,18 +168,30 @@ export default {
                     datasets: [
                         {
                             label: 'Cao',
-                            backgroundColor: '#f87979',
-                            data: []
+                            backgroundColor: '#FF7A66',
+                            data: [],
+                            // maxBarThickness: 8,
+                            barPercentage: 0.8,
+                            barThickness: 30,
+                            categoryPercentage: 0.5,
                         },
                         {
                             label: 'Trung bình',
-                            backgroundColor: '#4b77a9',
-                            data: []
+                            backgroundColor: '#F1DB50',
+                            data: [],
+                            // maxBarThickness: 8,
+                            barPercentage: 0.8,
+                            barThickness: 30,
+                            categoryPercentage: 0.5,
                         },
                         {
                             label: 'Thấp',
-                            backgroundColor: '#4b77a9',
-                            data: []
+                            backgroundColor: '#30CC7B',
+                            data: [],
+                            // maxBarThickness: 8,
+                            barPercentage: 0.8,
+                            barThickness: 30,
+                            categoryPercentage: 0.5,
                         }
                     ]
                 },
@@ -228,6 +200,13 @@ export default {
                     responsive: true,
                     scales: {
                         xAxes: [{
+                            stacked: true,
+                            gridLines: {
+                                display: false
+                            }
+                        }],
+                        yAxes: [{
+                            stacked: true,
                             ticks: {
                                 beginAtZero: true,
                                 callback: function (value) {
@@ -235,11 +214,6 @@ export default {
                                         return value;
                                     }
                                 }
-                            }
-                        }],
-                        yAxes: [{
-                            gridLines: {
-                                display: false
                             }
                         }],
                     },
@@ -249,7 +223,7 @@ export default {
                     tooltips: {
                         enabled: true,
                     }
-                }
+                },
             },
         }
     },
@@ -267,25 +241,32 @@ export default {
         async fetchData() {
             this.loaded = false;
             try {
-                const params = {
+                let params = {
                     startDate: this.startDate,
                     endDate: this.endDate
                 };
-                const response = await axios.get(generateUrl('/apps/qlcv/data/count_works', { params }));
+                const response = await axios.get(generateUrl('/apps/qlcv/data/count_works'), {
+                    params: {
+                        startDate: this.startDate,
+                        endDate: this.endDate
+                    }
+                });
+                let workCounts = null
+                workCounts = response.data.data;
+                console.log(workCounts)
+                console.log(response.data.data)
+                let filteredWorkCounts = workCounts.filter(item => item.all_works > 0);
 
-                const workCounts = response.data.data;
-                const filteredWorkCounts = workCounts.filter(item => item.all_works > 0);
+                let labels = filteredWorkCounts.map(item => item.project_name);
+                let all_works = filteredWorkCounts.map(item => item.all_works);
+                let todo_work = filteredWorkCounts.map(item => item.todo_work);
+                let doing_work = filteredWorkCounts.map(item => item.doing_work);
+                let pending_work = filteredWorkCounts.map(item => item.pending_work);
+                let done_work = filteredWorkCounts.map(item => item.done_work);
 
-                const labels = filteredWorkCounts.map(item => item.project_name);
-                const all_works = filteredWorkCounts.map(item => item.all_works);
-                const todo_work = filteredWorkCounts.map(item => item.todo_work);
-                const doing_work = filteredWorkCounts.map(item => item.doing_work);
-                const pending_work = filteredWorkCounts.map(item => item.pending_work);
-                const done_work = filteredWorkCounts.map(item => item.done_work);
-
-                const high = filteredWorkCounts.map(item => item.high);
-                const normal = filteredWorkCounts.map(item => item.normal);
-                const low = filteredWorkCounts.map(item => item.low);
+                let high = filteredWorkCounts.map(item => item.high);
+                let normal = filteredWorkCounts.map(item => item.normal);
+                let low = filteredWorkCounts.map(item => item.low);
 
                 this.projectStatus.chartData.labels = labels;
                 this.projectStatus.chartData.datasets[0].data = all_works;
@@ -306,11 +287,24 @@ export default {
             }
         },
 
-        downloadBarChart() {
-            const chart = this.$refs.barChart.$data._chart;
+        downloadPriorityChart() {
+            let chart = this.$refs.projectPriority.$data._chart;
             if (chart) {
-                const url = chart.toBase64Image();
-                const link = document.createElement('a');
+                let url = chart.toBase64Image();
+                let link = document.createElement('a');
+                link.href = url;
+                link.download = 'chart.png';
+                link.click();
+            } else {
+                console.error('Chart instance not found');
+            }
+        },
+
+        downloadStatusChart() {
+            let chart = this.$refs.projectStatus.$data._chart;
+            if (chart) {
+                let url = chart.toBase64Image();
+                let link = document.createElement('a');
                 link.href = url;
                 link.download = 'chart.png';
                 link.click();
@@ -359,7 +353,6 @@ export default {
 }
 
 .text-container {
-    margin-left: 200px;
     font-size: 16px;
     font-weight: bold;
 }

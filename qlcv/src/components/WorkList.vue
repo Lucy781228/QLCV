@@ -34,7 +34,7 @@
                         </template>
                     </NcButton>
                     <NcButton type="tertiary"
-                        :to="{ name: 'project-gantt', params: { sharedProjectID: receivedProjectID } }"
+                        :to="{ name: 'work-chart', params: { sharedProjectID: receivedProjectID } }"
                         aria-label="Example text" v-if="isProjectOwner">
                         <template #icon>
                             <Poll :size="20" />
@@ -61,7 +61,8 @@
                     class="work-item" v-for="work in filteredWorksByStatus(status)" :key="work.work_id">
                     <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
                         :status="work.status" :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
-                        :is-project-owner="isProjectOwner" @update="getWorks" :is-canceled="!work.actual_end_date && work.status == 3"/>
+                        :is-project-owner="isProjectOwner" @update="getWorks"
+                        :is-canceled="!work.actual_end_date && work.status == 3" />
                 </router-link>
             </div>
         </div>
@@ -71,7 +72,8 @@
                 class="work-item">
                 <Work :work-name="work.work_name" :label="work.label" :assigned-to="work.assigned_to"
                     :status="work.status" :work-id="work.work_id" @delete="showModal" :end-date="work.end_date"
-                    :is-project-owner="isProjectOwner" @update="getWorks" :is-canceled="!work.actual_end_date && work.status == 3"/>
+                    :is-project-owner="isProjectOwner" @update="getWorks"
+                    :is-canceled="!work.actual_end_date && work.status == 3" />
             </router-link>
         </div>
         <router-view @back-to-worklist="getWorks" />
@@ -151,11 +153,16 @@ export default {
             return this.$store.state.sharedTitle
         },
 
+        sharedDoingWorkId() {
+            return this.$store.state.sharedDoingWorkId
+        },
+
+
         receivedUserID() {
             return this.$store.state.sharedProjectOwner
         },
         isChildRoute() {
-            return this.$route.name !== 'project-gantt' && this.$route.name !== 'new-work'
+            return this.$route.name !== 'project-gantt' && this.$route.name !== 'new-work' && this.$route.name !== "work-chart"
         },
         isProjectOwner() {
             return this.user.uid == this.receivedUserID

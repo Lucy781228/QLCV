@@ -70,10 +70,10 @@
                     <span class="validation-error" v-if="!validation.requiredObject(endDate)">
                         {{ validationMessages['required'] }}
                     </span>
-                    <span class="validation-error" v-if="!isValidEndDate">
+                    <span class="validation-error" v-if="!isValidEndDate && (status == 0 || status == 1)">
                         Ngày kết thúc phải sau ngày hiện tại
                     </span>
-                    <span class="validation-error" v-else-if="!isValidDate">
+                    <span class="validation-error" v-else-if="!isValidDate && (status == 0 || status == 1)">
                         Ngày kết thúc phải sau ngày bắt đầu
                     </span>
                 </div>

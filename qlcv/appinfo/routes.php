@@ -65,6 +65,8 @@ return [
         ['name' => 'Task#createTask', 'url' => '/create_task', 'verb' => 'POST'],
         ['name' => 'Task#updateTask', 'url' => '/update_task', 'verb' => 'PUT'],
         ['name' => 'Task#deleteTask', 'url' => '/delete_task/{task_id}', 'verb' => 'DELETE'],
+        ['name' => 'Task#countTaskPerWorks', 'url' => '/task_per_works/{work_id}', 'verb' => 'GET'],
+        ['name' => 'Task#countUndoneTaskPerWorks', 'url' => '/undone_task_per_works/{work_id}', 'verb' => 'GET'],
 
     ],
 ];

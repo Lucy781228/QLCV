@@ -6,7 +6,7 @@
           <ArrowLeft :size="20" />
         </template>
       </NcButton>
-      <NcButton :type="chartButtonType" aria-label="Example text" @click="toggleChartButtonType">
+      <NcButton :type="chartButtonType" aria-label="Example text" @click="toggleChartButtonType" v-if="numberCompletedWork > 2">
         <template #icon>
           <ChartLineVariant :size="20" />
         </template>
@@ -63,6 +63,7 @@ export default {
       workData: null,
       isLoaded: false,
       chartButtonType: 'tertiary',
+      numberCompletedWork: 0
     }
   },
   computed: {
@@ -88,6 +89,7 @@ export default {
   methods: {
     async getWorks() {
       this.isLoaded = false
+      this.numberCompletedWork = 0
       try {
         const response = await axios.get(generateUrl('/apps/qlcv/works'), {
           params: {
@@ -106,6 +108,9 @@ export default {
           const duration = endDate ? Math.ceil((endDate - startDate) / (24 * 3600 * 1000)) : 0;
           const actualDuration = actualEndDate ? Math.ceil((actualEndDate - startDate) / (24 * 3600 * 1000)) : 0;
 
+          if (actualEndDate !== null) {
+            this.numberCompletedWork += 1
+          }
           console.log(formattedStartDate)
           return {
             id: work.work_id.toString(),

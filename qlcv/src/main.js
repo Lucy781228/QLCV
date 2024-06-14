@@ -14,6 +14,7 @@ import VueRouter from 'vue-router'
 import store from './store'
 import DataMenu from './components/data/DataMenu.vue'
 import GanttView from './components/data/GanttView.vue'
+import WorkChart from './components/data/WorkChart.vue'
 import WorkMenu from './components/WorkMenu.vue'
 import UpcomingWorkList from './components/UpcomingWorkList.vue'
 
@@ -51,6 +52,11 @@ const router = new VueRouter({
 					name: 'project-gantt',
 					path: 'gantt',
 					component: GanttView,
+				},
+				{
+					name: 'work-chart',
+					path: 'gantt',
+					component: WorkChart,
 				},
 				{
 					name: 'work',

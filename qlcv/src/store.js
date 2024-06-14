@@ -9,11 +9,12 @@ function loadState() {
         return JSON.parse(storedData);
     }
     return {
-        sharedTitle: 'Tác vụ sắp tới',
+        sharedTitle: 'Công vụ sắp tới',
         sharedProjectOwner: '',
         sharedProjectID: 0,
         sharedProjectStatus: 0,
         sharedWorkStatus: 0,
+        sharedDoingWorkId: 0
     };
 }
 
@@ -38,6 +39,10 @@ export default new Vuex.Store({
         },
         updateWorkStatus(state, value) {
             state.sharedWorkStatus = value;
+            localStorage.setItem('store', JSON.stringify(state));
+        },
+        updateDoingWorkId(state, value) {
+            state.sharedDoingWorkId = value;
             localStorage.setItem('store', JSON.stringify(state));
         }
     }

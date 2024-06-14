@@ -297,12 +297,13 @@ class WorkService
     {
         $today = new DateTime();
         $today->setTime(0, 0);
+        $today->modify('+17 hours');
         $todayTimestamp = $today->getTimestamp();
 
         try {
             $query = $this->db->getQueryBuilder();
             $query
-                ->select("work_id", "project_id")
+                ->select("work_id", "project_id", "assigned_to", "work_name")
                 ->from("qlcv_work")
                 ->where(
                     $query
@@ -332,6 +333,8 @@ class WorkService
                         null,
                         null,
                         1,
+                        null,
+                        null,
                         $work["project_id"]
                     );
 

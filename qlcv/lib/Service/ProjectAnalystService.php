@@ -14,42 +14,37 @@ class ProjectAnalystService
 
     public function getProjectIds($startDate, $endDate, $userId)
     {
-        // Define your base SQL query with placeholders
         $sql = "
-            SELECT
-                p.project_id,
-                p.project_name,
-                MIN(w.start_date) AS project_start_date,
-                MAX(w.end_date) AS project_end_date
-            FROM
-                oc_qlcv_project p
-            LEFT JOIN
-                oc_qlcv_work w ON p.project_id = w.project_id
+            SELECT *
+            FROM (
+                SELECT
+                    p.project_id,
+                    p.project_name,
+                    MIN(w.start_date) AS project_start_date,
+                    MAX(w.end_date) AS project_end_date
+                FROM
+                    oc_qlcv_project p
+                INNER JOIN
+                    oc_qlcv_work w ON p.project_id = w.project_id
+                WHERE
+                    p.user_id = :userId
+                GROUP BY
+                    p.project_id
+            ) AS project_summary
             WHERE
-                p.user_id = :userId
+                (:startDate = 0 OR project_summary.project_start_date >= :startDate)
+                AND (:endDate = 0 OR project_summary.project_end_date <= :endDate)
+            ORDER BY
+                project_summary.project_start_date ASC
         ";
     
-        // Initialize your parameters array with the named parameter `userId`
-        $params = ['userId' => $userId];
+        $params = [
+            'userId' => $userId,
+            'startDate' => $startDate,
+            'endDate' => $endDate
+        ];
     
-        // Add additional conditions and associated parameters if needed
-        if ($startDate !== null) {
-            $sql .= " AND w.start_date >= :startDate";
-            $params['startDate'] = $startDate;
-        }
-    
-        if ($endDate !== null) {
-            $sql .= " AND w.end_date <= :endDate";
-            $params['endDate'] = $endDate;
-        }
-    
-        // Add GROUP BY and ORDER BY clauses
-        $sql .= " GROUP BY p.project_id ORDER BY MIN(w.start_date) ASC";
-    
-        // Prepare and execute the query with the parameter array
         $stmt = $this->db->executeQuery($sql, $params);
-    
-        // Fetch and return results
         return $stmt->fetchAll();
     }
 

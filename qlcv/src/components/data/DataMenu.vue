@@ -1,20 +1,16 @@
 <template>
     <div class="wrapper">
         <div class="menu">
-            <NcMultiselect class="nc-select" v-model="selectedOption" :options="options" label="text" id="option"
-                ref="option" track-by="value" />
-            Từ
-            <NcDatetimePicker format="DD/MM/YYYY" class="nc-picker" :clearable="true" placeholder="Chọn một ngày" :disabled="!selectedOption"
+            <NcDatetimePicker format="DD/MM/YYYY" class="nc-picker" :clearable="true" placeholder="Ngày bắt đầu" 
                 v-model="startDate" />
-            đến
-            <NcDatetimePicker format="DD/MM/YYYY" class="nc-picker" :clearable="true" placeholder="Chọn một ngày" :disabled="!selectedOption"
+            <NcDatetimePicker format="DD/MM/YYYY" class="nc-picker" :clearable="true" placeholder="Ngày kết thúc"
                 v-model="endDate" />
-            <NcButton aria-label="Example text" type="primary" @click="showChart" :disabled="!selectedOption">
+            <NcButton aria-label="Example text" type="primary" @click="showChart">
                 Áp dụng
             </NcButton>
         </div>
         <div class="content">
-            <ProjectChart v-if="selectedOption.value == 0" :start-date="mysqlDateFormatter(start)" :end-date="mysqlDateFormatter(end)" />
+            <ProjectChart :start-date="dateFormatter(start)" :end-date="dateFormatter(end)" />
         </div>
     </div>
 </template>
@@ -39,13 +35,8 @@ export default {
         return {
             start: null,
             end: null,
-            selectedOption: { text: 'Dự án', value: 0 },
             startDate: null,
             endDate: null,
-            options: [
-                { text: 'Dự án', value: 0 },
-                { text: 'Công việc', value: 1 },
-            ],
         }
     },
     methods: {
@@ -54,12 +45,9 @@ export default {
             this.end = this.endDate
         },
 
-        mysqlDateFormatter(date) {
-            if (!date) return '';
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        dateFormatter(date) {
+            if(!date) return 0
+            return Math.floor(new Date(date).getTime()/1000)
         },
     },
 }
